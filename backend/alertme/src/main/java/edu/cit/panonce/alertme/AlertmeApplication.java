@@ -9,6 +9,6 @@ public class AlertmeApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(AlertmeApplication.class, args);
 	}
-
+	
 }
 
