@@ -53,8 +53,7 @@ public class SecurityConfig {
             );
 
         if (googleOAuthEnabled) {
-            http.oauth2Login(oauth2 -> oauth2
-                .successHandler(oAuth2AuthenticationSuccessHandler)
+            http.oauth2Login(oauth2 -> oauth2.successHandler(oAuth2AuthenticationSuccessHandler)
             );
         }
 
