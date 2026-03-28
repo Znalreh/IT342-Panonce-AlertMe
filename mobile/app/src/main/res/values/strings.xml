@@ -1,3 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">alertme</string>
+    <string name="app_name">AlertMe</string>
+
+    <!-- Login Screen -->
+    <string name="login_title">Sign In</string>
+    <string name="login_subtitle">Campus Safety &amp; Hazard Reporting</string>
+    <string name="email_label">Email Address</string>
+    <string name="email_hint">student@university.edu</string>
+    <string name="password_label">Password</string>
+    <string name="password_hint">Enter your password</string>
+    <string name="remember_me">Remember me</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="sign_in_button">Sign In</string>
+    <string name="or_divider">OR</string>
+    <string name="google_sign_in">Sign in with Google</string>
+    <string name="no_account">Don\'t have an account?</string>
+    <string name="register_link">Register here</string>
+
+    <!-- Register Screen -->
+    <string name="register_title">Register</string>
+    <string name="register_subtitle">Create Your Account</string>
+    <string name="first_name_label">First Name</string>
+    <string name="first_name_hint">John</string>
+    <string name="last_name_label">Last Name</string>
+    <string name="last_name_hint">Doe</string>
+    <string name="university_email_label">University Email</string>
+    <string name="role_label">Role</string>
+    <string name="role_hint">Select your role</string>
+    <string name="department_label">Department/Building (Optional)</string>
+    <string name="department_hint">Engineering, Admin, etc.</string>
+    <string name="confirm_password_label">Confirm Password</string>
+    <string name="confirm_password_hint">Re-enter your password</string>
+    <string name="create_password_hint">Create a strong password</string>
+    <string name="terms_agreement">I agree to the Terms of Service and Privacy Policy</string>
+    <string name="create_account_button">Create Account</string>
+    <string name="google_sign_up">Sign up with Google</string>
+    <string name="already_account">Already have an account?</string>
+    <string name="sign_in_link">Sign in here</string>
+
+    <!-- Footer -->
+    <string name="copyright">© 2026 AlertMe Platform</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="terms_service">Terms of Service</string>
+
+    <!-- Role Options -->
+    <string-array name="role_options">
+        <item>Student</item>
+        <item>Staff</item>
+        <item>Security Guard</item>
+    </string-array>
 </resources>
