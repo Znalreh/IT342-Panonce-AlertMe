@@ -116,35 +116,35 @@ export function AdminDashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b-2 border-gray-300 sticky top-0 z-10">
+      <header className="bg-[#001f3f] border-b-2 border-[#003366] sticky top-0 z-10 shadow-md">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" className="md:hidden">
+              <Button variant="ghost" size="icon" className="md:hidden text-white hover:bg-[#003366]">
                 <Menu className="w-5 h-5" />
               </Button>
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-gray-300 rounded-lg flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-gray-600" />
+                <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
-                  <p className="text-xs text-gray-500 hidden md:block">Manage all campus alerts</p>
+                  <h1 className="text-xl font-bold text-white">Admin Dashboard</h1>
+                  <p className="text-xs text-gray-300 hidden md:block">Manage all campus alerts</p>
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" className="hidden md:flex border-2 border-gray-300">
+              <Button variant="outline" size="sm" className="hidden md:flex border-2 border-white text-white hover:bg-white hover:text-[#001f3f]">
                 <Download className="w-4 h-4 mr-2" />
                 Export
               </Button>
-              <Button variant="ghost" size="icon" className="relative">
+              <Button variant="ghost" size="icon" className="relative text-white hover:bg-[#003366]">
                 <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-600 rounded-full"></span>
               </Button>
               <Link to="/profile">
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="text-white hover:bg-[#003366]">
                   <User className="w-5 h-5" />
                 </Button>
               </Link>
@@ -157,7 +157,7 @@ export function AdminDashboardPage() {
       <main className="max-w-7xl mx-auto px-4 py-6">
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card className="p-4 border-2 border-gray-300">
+          <Card className="p-4 border-2 border-gray-200 shadow-md">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm text-gray-600">Total Alerts</p>
               <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
@@ -204,15 +204,15 @@ export function AdminDashboardPage() {
 
         {/* Quick Actions */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <Button className="bg-gray-900 hover:bg-gray-800 text-white">
+          <Button className="bg-red-600 hover:bg-red-700 text-white">
             <BarChart3 className="w-4 h-4 mr-2" />
             Analytics Report
           </Button>
-          <Button variant="outline" className="border-2 border-gray-300">
+          <Button variant="outline" className="border-2 border-[#001f3f] text-[#001f3f] hover:bg-[#001f3f] hover:text-white">
             <Users className="w-4 h-4 mr-2" />
             Manage Teams
           </Button>
-          <Button variant="outline" className="border-2 border-gray-300">
+          <Button variant="outline" className="border-2 border-[#001f3f] text-[#001f3f] hover:bg-[#001f3f] hover:text-white">
             <Download className="w-4 h-4 mr-2" />
             Export Data
           </Button>
@@ -229,7 +229,7 @@ export function AdminDashboardPage() {
 
           <TabsContent value="all" className="space-y-4">
             {/* Filters and Search */}
-            <Card className="p-4 border-2 border-gray-300">
+            <Card className="p-4 border-2 border-gray-200 shadow-md">
               <div className="flex flex-col md:flex-row gap-3">
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />

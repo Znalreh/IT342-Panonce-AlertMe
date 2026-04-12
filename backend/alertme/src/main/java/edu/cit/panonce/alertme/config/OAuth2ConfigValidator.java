@@ -24,8 +24,7 @@ public class OAuth2ConfigValidator {
 
         if (isMissing(googleClientId) || isMissing(googleClientSecret)) {
             throw new IllegalStateException(
-                "Google OAuth configuration is missing. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET " +
-                "(or backend/alertme/.env.properties), then restart the backend."
+                "Google OAuth configuration is missing. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, then restart the backend."
             );
         }
     }

@@ -115,31 +115,31 @@ export function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b-2 border-gray-300 sticky top-0 z-10">
+      <header className="bg-[#001f3f] border-b-2 border-[#003366] sticky top-0 z-10 shadow-md">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" className="md:hidden">
+              <Button variant="ghost" size="icon" className="md:hidden text-white hover:bg-[#003366]">
                 <Menu className="w-5 h-5" />
               </Button>
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-gray-300 rounded-lg flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-gray-600" />
+                <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">AlertMe</h1>
-                  <p className="text-xs text-gray-500 hidden md:block">Campus Safety Dashboard</p>
+                  <h1 className="text-xl font-bold text-white">AlertMe</h1>
+                  <p className="text-xs text-gray-300 hidden md:block">Campus Safety Dashboard</p>
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" className="relative">
+              <Button variant="ghost" size="icon" className="relative text-white hover:bg-[#003366]">
                 <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-600 rounded-full"></span>
               </Button>
               <Link to="/profile">
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="text-white hover:bg-[#003366]">
                   <User className="w-5 h-5" />
                 </Button>
               </Link>
@@ -152,19 +152,19 @@ export function DashboardPage() {
       <main className="max-w-7xl mx-auto px-4 py-6">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card className="p-4 border-2 border-gray-300">
+          <Card className="p-4 border-2 border-gray-200 shadow-md">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Total Alerts</p>
-                <p className="text-2xl font-bold text-gray-900">127</p>
+                <p className="text-2xl font-bold text-[#001f3f]">127</p>
               </div>
-              <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-gray-600" />
+              <div className="w-12 h-12 bg-[#001f3f]/10 rounded-lg flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-[#001f3f]" />
               </div>
             </div>
           </Card>
 
-          <Card className="p-4 border-2 border-gray-300">
+          <Card className="p-4 border-2 border-gray-200 shadow-md">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Active</p>
@@ -176,7 +176,7 @@ export function DashboardPage() {
             </div>
           </Card>
 
-          <Card className="p-4 border-2 border-gray-300">
+          <Card className="p-4 border-2 border-gray-200 shadow-md">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Resolved</p>
@@ -188,13 +188,13 @@ export function DashboardPage() {
             </div>
           </Card>
 
-          <Card className="p-4 border-2 border-gray-300">
+          <Card className="p-4 border-2 border-gray-200 shadow-md">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">High Priority</p>
                 <p className="text-2xl font-bold text-red-600">6</p>
               </div>
-              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
                 <AlertCircle className="w-6 h-6 text-red-600" />
               </div>
             </div>
@@ -207,13 +207,13 @@ export function DashboardPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <Input
               placeholder="Search alerts by location, category, or description..."
-              className="pl-10 border-2 border-gray-300"
+              className="pl-10 border-2 border-gray-200"
             />
           </div>
-          
+
           <div className="flex gap-2">
             <Select>
-              <SelectTrigger className="w-40 border-2 border-gray-300">
+              <SelectTrigger className="w-40 border-2 border-gray-200">
                 <Filter className="w-4 h-4 mr-2" />
                 <SelectValue placeholder="Filter" />
               </SelectTrigger>
@@ -226,7 +226,7 @@ export function DashboardPage() {
             </Select>
 
             <Link to="/report">
-              <Button className="bg-gray-900 hover:bg-gray-800 text-white">
+              <Button className="bg-red-600 hover:bg-red-700 text-white">
                 <Plus className="w-4 h-4 mr-2" />
                 Report Alert
               </Button>
@@ -237,22 +237,22 @@ export function DashboardPage() {
         {/* Quick Actions */}
         <div className="flex gap-3 mb-6 overflow-x-auto pb-2">
           <Link to="/browse">
-            <Button variant="outline" size="sm" className="border-2 border-gray-300 whitespace-nowrap">
+            <Button variant="outline" size="sm" className="border-2 border-[#001f3f] text-[#001f3f] hover:bg-[#001f3f] hover:text-white whitespace-nowrap">
               All Alerts
             </Button>
           </Link>
-          <Button variant="outline" size="sm" className="border-2 border-gray-300 whitespace-nowrap">
+          <Button variant="outline" size="sm" className="border-2 border-gray-200 hover:border-[#001f3f] hover:text-[#001f3f] whitespace-nowrap">
             My Reports
           </Button>
-          <Button variant="outline" size="sm" className="border-2 border-gray-300 whitespace-nowrap">
+          <Button variant="outline" size="sm" className="border-2 border-gray-200 hover:border-[#001f3f] hover:text-[#001f3f] whitespace-nowrap">
             <Shield className="w-4 h-4 mr-1" />
             Security
           </Button>
-          <Button variant="outline" size="sm" className="border-2 border-gray-300 whitespace-nowrap">
+          <Button variant="outline" size="sm" className="border-2 border-gray-200 hover:border-[#001f3f] hover:text-[#001f3f] whitespace-nowrap">
             <Wrench className="w-4 h-4 mr-1" />
             Infrastructure
           </Button>
-          <Button variant="outline" size="sm" className="border-2 border-gray-300 whitespace-nowrap">
+          <Button variant="outline" size="sm" className="border-2 border-gray-200 hover:border-[#001f3f] hover:text-[#001f3f] whitespace-nowrap">
             <AlertCircle className="w-4 h-4 mr-1" />
             Environmental
           </Button>
@@ -260,19 +260,19 @@ export function DashboardPage() {
 
         {/* Recent Alerts Feed */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Alerts</h2>
-          
+          <h2 className="text-lg font-semibold text-[#001f3f] mb-4">Recent Alerts</h2>
+
           <div className="space-y-4">
             {mockAlerts.map((alert) => (
               <Link key={alert.id} to={`/alert/${alert.id}`}>
-                <Card className="p-5 border-2 border-gray-300 hover:border-gray-400 transition-colors cursor-pointer">
+                <Card className="p-5 border-2 border-gray-200 hover:border-[#001f3f] transition-colors cursor-pointer shadow-sm hover:shadow-md">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-start gap-3 flex-1">
-                      <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 bg-[#001f3f]/10 rounded-lg flex items-center justify-center flex-shrink-0">
                         {getCategoryIcon(alert.category)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 mb-1">{alert.title}</h3>
+                        <h3 className="font-semibold text-[#001f3f] mb-1">{alert.title}</h3>
                         <p className="text-sm text-gray-600 mb-2 line-clamp-2">{alert.description}</p>
                         <div className="flex items-center gap-2 text-sm text-gray-500">
                           <MapPin className="w-4 h-4" />
@@ -280,7 +280,7 @@ export function DashboardPage() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex flex-col items-end gap-2 ml-4">
                       <Badge className={`border ${getStatusColor(alert.status)} whitespace-nowrap`}>
                         {alert.status}
@@ -290,13 +290,13 @@ export function DashboardPage() {
                       </Badge>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between pt-3 border-t border-gray-200">
                     <div className="flex items-center gap-2 text-xs text-gray-500">
                       <Clock className="w-3 h-3" />
                       <span>{alert.time}</span>
                     </div>
-                    <Badge variant="outline" className="text-xs border-gray-300">
+                    <Badge variant="outline" className="text-xs border-gray-200">
                       {alert.category}
                     </Badge>
                   </div>
@@ -308,7 +308,7 @@ export function DashboardPage() {
           {/* View All Button */}
           <div className="text-center mt-6">
             <Link to="/browse">
-              <Button variant="outline" className="border-2 border-gray-300">
+              <Button variant="outline" className="border-2 border-[#001f3f] text-[#001f3f] hover:bg-[#001f3f] hover:text-white">
                 View All Alerts
               </Button>
             </Link>
@@ -317,21 +317,21 @@ export function DashboardPage() {
       </main>
 
       {/* Bottom Navigation (Mobile) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-300">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 shadow-lg">
         <div className="flex justify-around py-3">
-          <Link to="/dashboard" className="flex flex-col items-center gap-1 text-gray-900">
+          <Link to="/dashboard" className="flex flex-col items-center gap-1 text-[#001f3f]">
             <AlertTriangle className="w-5 h-5" />
             <span className="text-xs">Dashboard</span>
           </Link>
-          <Link to="/report" className="flex flex-col items-center gap-1 text-gray-500">
+          <Link to="/report" className="flex flex-col items-center gap-1 text-gray-500 hover:text-red-600">
             <Plus className="w-5 h-5" />
             <span className="text-xs">Report</span>
           </Link>
-          <Link to="/browse" className="flex flex-col items-center gap-1 text-gray-500">
+          <Link to="/browse" className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#001f3f]">
             <Search className="w-5 h-5" />
             <span className="text-xs">Browse</span>
           </Link>
-          <Link to="/profile" className="flex flex-col items-center gap-1 text-gray-500">
+          <Link to="/profile" className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#001f3f]">
             <User className="w-5 h-5" />
             <span className="text-xs">Profile</span>
           </Link>

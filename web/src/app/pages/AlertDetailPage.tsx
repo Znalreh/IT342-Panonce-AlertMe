@@ -4,6 +4,7 @@ import { Badge } from "../components/ui/badge";
 import { Card } from "../components/ui/card";
 import { Separator } from "../components/ui/separator";
 import { Textarea } from "../components/ui/textarea";
+import { Label } from "../components/ui/label";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -70,24 +71,24 @@ export function AlertDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b-2 border-gray-300 sticky top-0 z-10">
+      <header className="bg-[#001f3f] border-b-2 border-[#003366] sticky top-0 z-10 shadow-md">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <Link to="/dashboard">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="text-white hover:bg-[#003366]">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
             </Link>
             <div className="flex items-center gap-2 flex-1">
-              <div className="w-10 h-10 bg-gray-300 rounded-lg flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-gray-600" />
+              <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl font-bold text-gray-900 truncate">Alert Details</h1>
-                <p className="text-xs text-gray-500">Alert ID: #{alert.id}</p>
+                <h1 className="text-xl font-bold text-white truncate">Alert Details</h1>
+                <p className="text-xs text-gray-300">Alert ID: #{alert.id}</p>
               </div>
             </div>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="text-white hover:bg-[#003366]">
               <Share2 className="w-5 h-5" />
             </Button>
           </div>
@@ -115,18 +116,18 @@ export function AlertDetailPage() {
         </Card>
 
         {/* Alert Header */}
-        <Card className="p-6 mb-6 border-2 border-gray-300">
+        <Card className="p-6 mb-6 border-2 border-gray-200 shadow-md">
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <Badge variant="outline" className="border-gray-300">{alert.category}</Badge>
+                <Badge variant="outline" className="border-gray-200">{alert.category}</Badge>
                 <Badge className="bg-orange-100 text-orange-800 border-orange-300 border">
                   {alert.priority} Priority
                 </Badge>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">{alert.title}</h2>
+              <h2 className="text-2xl font-bold text-[#001f3f] mb-3">{alert.title}</h2>
             </div>
-            <Button variant="outline" size="icon" className="border-2 border-gray-300">
+            <Button variant="outline" size="icon" className="border-2 border-gray-200">
               <Flag className="w-4 h-4" />
             </Button>
           </div>
@@ -171,7 +172,7 @@ export function AlertDetailPage() {
         </Card>
 
         {/* Photos */}
-        <Card className="p-6 mb-6 border-2 border-gray-300">
+        <Card className="p-6 mb-6 border-2 border-gray-200 shadow-md">
           <div className="flex items-center gap-2 mb-4">
             <ImageIcon className="w-5 h-5 text-gray-600" />
             <h3 className="font-semibold text-gray-900">Attachments ({alert.images.length})</h3>
@@ -187,7 +188,7 @@ export function AlertDetailPage() {
         </Card>
 
         {/* Status Timeline */}
-        <Card className="p-6 mb-6 border-2 border-gray-300">
+        <Card className="p-6 mb-6 border-2 border-gray-200 shadow-md">
           <h3 className="font-semibold text-gray-900 mb-4">Status Timeline</h3>
           
           <div className="space-y-4">
@@ -274,14 +275,14 @@ export function AlertDetailPage() {
 
           {/* Add Comment */}
           <div>
-            <Label className="text-sm font-medium text-gray-900 mb-2 block">Add a comment</Label>
+            <Label className="text-sm font-medium text-[#001f3f] mb-2 block">Add a comment</Label>
             <Textarea
               placeholder="Ask questions or provide additional information..."
               rows={3}
-              className="mb-3 border-2 border-gray-300"
+              className="mb-3 border-2 border-gray-200"
             />
             <div className="flex justify-end">
-              <Button size="sm" className="bg-gray-900 hover:bg-gray-800 text-white">
+              <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white">
                 Post Comment
               </Button>
             </div>

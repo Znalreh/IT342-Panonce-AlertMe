@@ -144,21 +144,21 @@ export function BrowseAlertsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b-2 border-gray-300 sticky top-0 z-10">
+      <header className="bg-[#001f3f] border-b-2 border-[#003366] sticky top-0 z-10 shadow-md">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <Link to="/dashboard">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="text-white hover:bg-[#003366]">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
             </Link>
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gray-300 rounded-lg flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-gray-600" />
+              <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Browse Alerts</h1>
-                <p className="text-xs text-gray-500">View all campus safety reports</p>
+                <h1 className="text-xl font-bold text-white">Browse Alerts</h1>
+                <p className="text-xs text-gray-300">View all campus safety reports</p>
               </div>
             </div>
           </div>
@@ -168,19 +168,19 @@ export function BrowseAlertsPage() {
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-6 pb-20">
         {/* Search and Filter Bar */}
-        <Card className="p-4 mb-6 border-2 border-gray-300">
+        <Card className="p-4 mb-6 border-2 border-gray-200 shadow-md">
           <div className="flex flex-col gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
                 placeholder="Search alerts by title, location, or description..."
-                className="pl-10 border-2 border-gray-300"
+                className="pl-10 border-2 border-gray-200"
               />
             </div>
 
             <div className="flex flex-col md:flex-row gap-3">
               <Select>
-                <SelectTrigger className="border-2 border-gray-300">
+                <SelectTrigger className="border-2 border-gray-200">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
@@ -193,7 +193,7 @@ export function BrowseAlertsPage() {
               </Select>
 
               <Select>
-                <SelectTrigger className="border-2 border-gray-300">
+                <SelectTrigger className="border-2 border-gray-200">
                   <SlidersHorizontal className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
@@ -206,7 +206,7 @@ export function BrowseAlertsPage() {
               </Select>
 
               <Select>
-                <SelectTrigger className="border-2 border-gray-300">
+                <SelectTrigger className="border-2 border-gray-200">
                   <AlertTriangle className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="All Priorities" />
                 </SelectTrigger>
@@ -219,7 +219,7 @@ export function BrowseAlertsPage() {
               </Select>
 
               <Select>
-                <SelectTrigger className="border-2 border-gray-300">
+                <SelectTrigger className="border-2 border-gray-200">
                   <Calendar className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Date Range" />
                 </SelectTrigger>
@@ -236,7 +236,7 @@ export function BrowseAlertsPage() {
 
         {/* Quick Filter Tags */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-          <Button size="sm" className="bg-gray-900 hover:bg-gray-800 text-white whitespace-nowrap">
+          <Button size="sm" className="bg-[#001f3f] hover:bg-[#003366] text-white whitespace-nowrap">
             All ({mockAlerts.length})
           </Button>
           <Button variant="outline" size="sm" className="border-2 border-red-300 text-red-700 hover:bg-red-50 whitespace-nowrap">
@@ -259,7 +259,7 @@ export function BrowseAlertsPage() {
             Showing <span className="font-medium">{mockAlerts.length}</span> alerts
           </p>
           <Select defaultValue="recent">
-            <SelectTrigger className="w-48 border-2 border-gray-300 h-9">
+            <SelectTrigger className="w-48 border-2 border-gray-200 h-9">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -275,14 +275,14 @@ export function BrowseAlertsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           {mockAlerts.map((alert) => (
             <Link key={alert.id} to={`/alert/${alert.id}`}>
-              <Card className="p-5 border-2 border-gray-300 hover:border-gray-400 transition-colors cursor-pointer h-full">
+              <Card className="p-5 border-2 border-gray-200 hover:border-[#001f3f] transition-colors cursor-pointer h-full shadow-sm hover:shadow-md">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 bg-[#001f3f]/10 rounded-lg flex items-center justify-center flex-shrink-0">
                       {getCategoryIcon(alert.category)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">{alert.title}</h3>
+                      <h3 className="font-semibold text-[#001f3f] mb-1 line-clamp-2">{alert.title}</h3>
                       <p className="text-sm text-gray-600 mb-2 line-clamp-2">{alert.description}</p>
                     </div>
                   </div>
@@ -314,7 +314,7 @@ export function BrowseAlertsPage() {
 
         {/* Load More */}
         <div className="text-center">
-          <Button variant="outline" className="border-2 border-gray-300 px-8">
+          <Button variant="outline" className="border-2 border-[#001f3f] text-[#001f3f] hover:bg-[#001f3f] hover:text-white px-8">
             Load More Alerts
           </Button>
         </div>

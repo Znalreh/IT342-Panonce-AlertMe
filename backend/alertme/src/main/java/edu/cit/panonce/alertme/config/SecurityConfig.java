@@ -45,17 +45,17 @@ public class SecurityConfig {
                 googleOAuthEnabled ? SessionCreationPolicy.IF_REQUIRED : SessionCreationPolicy.STATELESS
             ))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers("/error").permitAll()
-                .requestMatchers(googleOAuthEnabled ? "/oauth2/**" : "/_oauth2_disabled").permitAll()
-                .requestMatchers(googleOAuthEnabled ? "/login/oauth2/**" : "/_login_oauth2_disabled").permitAll()
+                .requestMatchers(
+                    "/api/v1/auth/register",
+                    "/api/v1/auth/login",
+                    "/error",
+                    "/oauth2/**",
+                    "/login/oauth2/**"
+                ).permitAll()
                 .anyRequest().authenticated()
             );
 
-        if (googleOAuthEnabled) {
-            http.oauth2Login(oauth2 -> oauth2.successHandler(oAuth2AuthenticationSuccessHandler)
-            );
-        }
+        http.oauth2Login(oauth2 -> oauth2.successHandler(oAuth2AuthenticationSuccessHandler));
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
