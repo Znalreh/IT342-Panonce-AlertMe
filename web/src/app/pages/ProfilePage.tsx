@@ -1,11 +1,12 @@
 import { Link, useNavigate } from "react-router";
+import { useEffect, useState } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Switch } from "../components/ui/switch";
-import { clearAuthToken } from "../api/auth";
+import { clearAuthToken, getCurrentUser } from "../api/auth";
+import type { UserProfile } from "../api/auth";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -20,43 +21,84 @@ import {
   Trash2,
   Edit,
   Save,
-  LogOut,
 } from "lucide-react";
 
 export function ProfilePage() {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   function handleLogout() {
     clearAuthToken();
-    navigate("/login", { replace: true });
+    navigate('/login');
   }
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const user = await getCurrentUser();
+        setProfile(user);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unable to load profile.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadProfile();
+  }, []);
+
+  const displayName = profile ? `${profile.firstName} ${profile.lastName}` : "Loading profile...";
+  const displayEmail = profile?.email ?? "Loading...";
+  const memberSince = profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "Unknown";
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b-2 border-gray-300 sticky top-0 z-10">
+      <header className="bg-[#001f3f] border-b-2 border-[#003366] sticky top-0 z-10 shadow-md">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <Link to="/dashboard">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="text-white hover:bg-[#003366]">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
             </Link>
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gray-300 rounded-lg flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-gray-600" />
+            <div className="flex items-center gap-2 flex-1">
+              <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">My Profile</h1>
-                <p className="text-xs text-gray-500">Manage your account settings</p>
+                <h1 className="text-xl font-bold text-white">My Profile</h1>
+                <p className="text-xs text-gray-300">Manage your account settings</p>
               </div>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[#001f3f] border-white hover:bg-white "
+              onClick={handleLogout}
+            >
+              Logout
+            </Button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 py-6 pb-20">
+        {loading && (
+          <div className="mb-6 rounded-lg border border-gray-300 bg-white p-4 text-sm text-gray-700">
+            Loading profile information...
+          </div>
+        )}
+
+        {error && !loading && (
+          <div className="mb-6 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
         {/* Profile Header */}
         <Card className="p-6 mb-6 border-2 border-gray-300">
           <div className="flex items-start gap-6">
@@ -66,19 +108,22 @@ export function ProfilePage() {
               </div>
               <Button
                 size="icon"
-                className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-gray-900 hover:bg-gray-800"
+                className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-red-600 hover:bg-red-700"
               >
                 <Edit className="w-4 h-4" />
               </Button>
             </div>
             
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-gray-900 mb-1">John Doe</h2>
-              <p className="text-gray-600 mb-2">john.doe@university.edu</p>
+              <h2 className="text-2xl font-bold text-[#001f3f] mb-1">{displayName}</h2>
+              <p className="text-gray-600 mb-2">{displayEmail}</p>
               <div className="flex flex-wrap gap-2">
-                <Badge className="bg-blue-100 text-blue-800 border-blue-300 border">Student</Badge>
-                <Badge variant="outline" className="border-gray-300">Engineering Department</Badge>
-                <Badge variant="outline" className="border-gray-300">Member since Feb 2024</Badge>
+                <Badge className="bg-blue-100 text-blue-800 border-blue-300 border">
+                  {profile ? profile.role : "Loading..."}
+                </Badge>
+                <Badge variant="outline" className="border-gray-300">
+                  {profile ? `Member since ${memberSince}` : "Member since ..."}
+                </Badge>
               </div>
             </div>
           </div>
@@ -86,15 +131,15 @@ export function ProfilePage() {
 
         {/* Account Stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <Card className="p-4 border-2 border-gray-300 text-center">
+          <Card className="p-4 border-2 border-gray-200 shadow-md text-center">
             <p className="text-2xl font-bold text-gray-900 mb-1">12</p>
             <p className="text-sm text-gray-600">Reports Submitted</p>
           </Card>
-          <Card className="p-4 border-2 border-gray-300 text-center">
+          <Card className="p-4 border-2 border-gray-200 shadow-md text-center">
             <p className="text-2xl font-bold text-gray-900 mb-1">8</p>
             <p className="text-sm text-gray-600">Active Alerts</p>
           </Card>
-          <Card className="p-4 border-2 border-gray-300 text-center">
+          <Card className="p-4 border-2 border-gray-200 shadow-md text-center">
             <p className="text-2xl font-bold text-gray-900 mb-1">4</p>
             <p className="text-sm text-gray-600">Resolved</p>
           </Card>
@@ -114,11 +159,11 @@ export function ProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-1 block">First Name</label>
-                <Input value="John" readOnly className="border-2 border-gray-300 bg-gray-50" />
+                <Input value={profile?.firstName ?? "Loading..."} readOnly className="border-2 border-gray-300 bg-gray-50" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-1 block">Last Name</label>
-                <Input value="Doe" readOnly className="border-2 border-gray-300 bg-gray-50" />
+                <Input value={profile?.lastName ?? "Loading..."} readOnly className="border-2 border-gray-300 bg-gray-50" />
               </div>
             </div>
 
@@ -127,7 +172,7 @@ export function ProfilePage() {
                 <Mail className="w-4 h-4" />
                 Email Address
               </label>
-              <Input value="john.doe@university.edu" readOnly className="border-2 border-gray-300 bg-gray-50" />
+              <Input value={profile?.email ?? "Loading..."} readOnly className="border-2 border-gray-300 bg-gray-50" />
             </div>
 
             <div>
@@ -135,16 +180,7 @@ export function ProfilePage() {
                 <Shield className="w-4 h-4" />
                 Role
               </label>
-              <Select defaultValue="student">
-                <SelectTrigger className="border-2 border-gray-300 bg-gray-50">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="staff">Staff</SelectItem>
-                  <SelectItem value="security">Security Guard</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input value={profile?.role ?? "Loading..."} readOnly className="border-2 border-gray-300 bg-gray-50" />
             </div>
 
             <div>
@@ -152,7 +188,7 @@ export function ProfilePage() {
                 <Building className="w-4 h-4" />
                 Department/Building
               </label>
-              <Input value="Engineering Department" readOnly className="border-2 border-gray-300 bg-gray-50" />
+              <Input value={profile ? "Not set" : "Loading..."} readOnly className="border-2 border-gray-300 bg-gray-50" />
             </div>
           </div>
         </Card>
@@ -272,15 +308,6 @@ export function ProfilePage() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Data Management</h3>
 
           <div className="space-y-3">
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-              className="w-full justify-start border-2 border-gray-300"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
-
             <Button variant="outline" className="w-full justify-start border-2 border-gray-300">
               <Download className="w-4 h-4 mr-2" />
               Download My Data
@@ -295,12 +322,12 @@ export function ProfilePage() {
 
         {/* Save Changes Button */}
         <div className="flex gap-3">
-          <Button className="flex-1 bg-gray-900 hover:bg-gray-800 text-white">
+          <Button className="flex-1 bg-red-600 hover:bg-red-700 text-white">
             <Save className="w-4 h-4 mr-2" />
             Save Changes
           </Button>
           <Link to="/dashboard" className="flex-1">
-            <Button variant="outline" className="w-full border-2 border-gray-300">
+            <Button variant="outline" className="w-full border-2 border-gray-200 hover:border-[#001f3f]">
               Cancel
             </Button>
           </Link>

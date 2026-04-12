@@ -1,4 +1,8 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim() ?? "";
+
+function buildApiUrl(path: string) {
+  return API_BASE_URL ? `${API_BASE_URL}${path}` : path;
+}
 
 type Role = "STUDENT" | "STAFF" | "SECURITY" | "ADMIN";
 const TOKEN_STORAGE_KEY = "alertme_access_token";
@@ -12,6 +16,16 @@ export interface AuthUser {
   accessToken: string;
   tokenType: string;
   expiresAt: number;
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: Role;
+  createdAt?: string;
+  lastLoginAt?: string;
 }
 
 export interface RegisterPayload {
@@ -46,7 +60,7 @@ async function parseResponse(response: Response): Promise<AuthUser> {
 }
 
 export async function registerUser(payload: RegisterPayload): Promise<AuthUser> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
+  const response = await fetch(buildApiUrl("/api/v1/auth/register"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -58,7 +72,7 @@ export async function registerUser(payload: RegisterPayload): Promise<AuthUser> 
 }
 
 export async function loginUser(payload: LoginPayload): Promise<AuthUser> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+  const response = await fetch(buildApiUrl("/api/v1/auth/login"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -67,6 +81,35 @@ export async function loginUser(payload: LoginPayload): Promise<AuthUser> {
   });
 
   return parseResponse(response);
+}
+
+export async function getCurrentUser(): Promise<UserProfile> {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated.");
+  }
+
+  const response = await fetch(buildApiUrl("/api/v1/auth/me"), {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (response.ok) {
+    return (await response.json()) as UserProfile;
+  }
+
+  let message = "Could not load profile.";
+  try {
+    const errorPayload = (await response.json()) as { message?: string };
+    if (errorPayload.message) {
+      message = errorPayload.message;
+    }
+  } catch {
+    // keep default error message
+  }
+
+  throw new Error(message);
 }
 
 export function saveAuthToken(token: string): void {
@@ -82,5 +125,5 @@ export function clearAuthToken(): void {
 }
 
 export function getGoogleAuthUrl(): string {
-  return `${API_BASE_URL}/oauth2/authorization/google`;
+  return buildApiUrl("/oauth2/authorization/google");
 }

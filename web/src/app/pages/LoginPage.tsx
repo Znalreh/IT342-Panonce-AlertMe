@@ -24,6 +24,7 @@ export function LoginPage() {
     }
 
     saveAuthToken(accessToken);
+    window.history.replaceState({}, "", "/login");
     navigate("/dashboard", { replace: true });
   }, [navigate]);
 
