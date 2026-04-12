@@ -1,9 +1,12 @@
 import { Link } from "react-router";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Card } from "../components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { fetchAlerts } from "../api/alerts";
+import type { AlertData, AlertPriority, AlertStatus } from "../api/alerts";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -18,110 +21,96 @@ import {
   Calendar,
 } from "lucide-react";
 
-export function BrowseAlertsPage() {
-  const mockAlerts = [
-    {
-      id: "1",
-      title: "Broken Light in Parking Lot B",
-      category: "Infrastructure",
-      status: "Investigating",
-      location: "Parking Lot B, Section 3",
-      time: "15 mins ago",
-      priority: "Medium",
-      description: "Several lights are not working in the north section",
-    },
-    {
-      id: "2",
-      title: "Suspicious Activity Near Library",
-      category: "Security",
-      status: "Received",
-      location: "Main Library, East Entrance",
-      time: "1 hour ago",
-      priority: "High",
-      description: "Unknown individual attempting to access restricted area",
-    },
-    {
-      id: "3",
-      title: "Water Leak in Building A",
-      category: "Infrastructure",
-      status: "Resolved",
-      location: "Building A, Room 402",
-      time: "3 hours ago",
-      priority: "High",
-      description: "Ceiling leak causing water damage",
-    },
-    {
-      id: "4",
-      title: "Icy Walkway Near Dormitory",
-      category: "Environmental",
-      status: "Received",
-      location: "West Dormitory Main Path",
-      time: "5 hours ago",
-      priority: "High",
-      description: "Walkway extremely slippery due to ice formation",
-    },
-    {
-      id: "5",
-      title: "Broken Door Lock",
-      category: "Infrastructure",
-      status: "Investigating",
-      location: "Engineering Building, Room 205",
-      time: "1 day ago",
-      priority: "Medium",
-      description: "Door lock not functioning properly",
-    },
-    {
-      id: "6",
-      title: "Graffiti on Building Wall",
-      category: "Security",
-      status: "Received",
-      location: "Science Building, West Side",
-      time: "2 days ago",
-      priority: "Low",
-      description: "Vandalism discovered on exterior wall",
-    },
-    {
-      id: "7",
-      title: "Pothole in Main Road",
-      category: "Infrastructure",
-      status: "Investigating",
-      location: "Campus Main Road, Near Gate 2",
-      time: "3 days ago",
-      priority: "Medium",
-      description: "Large pothole causing traffic disruption",
-    },
-    {
-      id: "8",
-      title: "Fallen Tree Branch",
-      category: "Environmental",
-      status: "Resolved",
-      location: "Central Park Area",
-      time: "1 week ago",
-      priority: "Medium",
-      description: "Tree branch blocking walkway after storm",
-    },
-  ];
+const CATEGORY_FILTER_VALUES = ["ALL", "Security", "Infrastructure", "Environmental"] as const;
+const DATE_FILTER_VALUES = ["all", "today", "week", "month"] as const;
 
-  const getStatusColor = (status: string) => {
+export function BrowseAlertsPage() {
+  const [alerts, setAlerts] = useState<AlertData[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<AlertStatus | "ALL">("ALL");
+  const [categoryFilter, setCategoryFilter] = useState<typeof CATEGORY_FILTER_VALUES[number]>("ALL");
+  const [priorityFilter, setPriorityFilter] = useState<AlertPriority | "ALL">("ALL");
+  const [dateFilter, setDateFilter] = useState<typeof DATE_FILTER_VALUES[number]>("all");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadAlerts() {
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      try {
+        const data = await fetchAlerts();
+        setAlerts(data);
+      } catch (error) {
+        setErrorMessage(error instanceof Error ? error.message : "Unable to load alerts.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadAlerts();
+  }, []);
+
+  const filteredAlerts = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const now = new Date();
+
+    return alerts.filter((alert) => {
+      const matchesStatus = statusFilter === "ALL" || alert.status === statusFilter;
+      const matchesCategory = categoryFilter === "ALL" || alert.category === categoryFilter;
+      const matchesPriority = priorityFilter === "ALL" || alert.priority === priorityFilter;
+      const combinedText = [alert.category, alert.description, alert.locationText, alert.geocodedAddress]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      const matchesSearch = !normalizedSearch || combinedText.includes(normalizedSearch);
+
+      let matchesDate = true;
+      if (alert.createdAt && dateFilter !== "all") {
+        const createdAt = new Date(alert.createdAt);
+        const diffMs = now.getTime() - createdAt.getTime();
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+        if (dateFilter === "today") {
+          matchesDate = diffDays < 1;
+        } else if (dateFilter === "week") {
+          matchesDate = diffDays < 7;
+        } else if (dateFilter === "month") {
+          matchesDate = diffDays < 30;
+        }
+      }
+
+      return matchesStatus && matchesCategory && matchesPriority && matchesSearch && matchesDate;
+    });
+  }, [alerts, categoryFilter, dateFilter, priorityFilter, searchTerm, statusFilter]);
+
+  const totalAlerts = alerts.length;
+  const highPriorityAlerts = alerts.filter((alert) => alert.priority === "HIGH").length;
+  const newAlerts = alerts.filter((alert) => alert.status === "RECEIVED").length;
+  const inProgressAlerts = alerts.filter((alert) => alert.status === "INVESTIGATING").length;
+  const resolvedAlerts = alerts.filter((alert) => alert.status === "RESOLVED").length;
+
+  const getStatusColor = (status: AlertStatus) => {
     switch (status) {
-      case "Received":
+      case "RECEIVED":
         return "bg-blue-100 text-blue-800 border-blue-300";
-      case "Investigating":
+      case "INVESTIGATING":
         return "bg-yellow-100 text-yellow-800 border-yellow-300";
-      case "Resolved":
+      case "RESOLVED":
         return "bg-green-100 text-green-800 border-green-300";
       default:
         return "bg-gray-100 text-gray-800 border-gray-300";
     }
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: AlertPriority) => {
     switch (priority) {
-      case "High":
+      case "HIGH":
         return "bg-red-100 text-red-800 border-red-300";
-      case "Medium":
+      case "MEDIUM":
         return "bg-orange-100 text-orange-800 border-orange-300";
-      case "Low":
+      case "LOW":
         return "bg-gray-100 text-gray-800 border-gray-300";
       default:
         return "bg-gray-100 text-gray-800 border-gray-300";
@@ -139,6 +128,19 @@ export function BrowseAlertsPage() {
       default:
         return <AlertTriangle className="w-4 h-4" />;
     }
+  };
+
+  const formatAlertTime = (timestamp?: string) => {
+    if (!timestamp) {
+      return "Unknown time";
+    }
+
+    return new Date(timestamp).toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
   };
 
   return (
@@ -173,52 +175,54 @@ export function BrowseAlertsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder="Search alerts by title, location, or description..."
                 className="pl-10 border-2 border-gray-200"
               />
             </div>
 
             <div className="flex flex-col md:flex-row gap-3">
-              <Select>
+              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as AlertStatus | "ALL") }>
                 <SelectTrigger className="border-2 border-gray-200">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="received">Received</SelectItem>
-                  <SelectItem value="investigating">Investigating</SelectItem>
-                  <SelectItem value="resolved">Resolved</SelectItem>
+                  <SelectItem value="ALL">All Status</SelectItem>
+                  <SelectItem value="RECEIVED">Received</SelectItem>
+                  <SelectItem value="INVESTIGATING">Investigating</SelectItem>
+                  <SelectItem value="RESOLVED">Resolved</SelectItem>
                 </SelectContent>
               </Select>
 
-              <Select>
+              <Select value={categoryFilter} onValueChange={(value) => setCategoryFilter(value as typeof CATEGORY_FILTER_VALUES[number])}>
                 <SelectTrigger className="border-2 border-gray-200">
                   <SlidersHorizontal className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="security">Security</SelectItem>
-                  <SelectItem value="infrastructure">Infrastructure</SelectItem>
-                  <SelectItem value="environmental">Environmental</SelectItem>
+                  <SelectItem value="ALL">All Categories</SelectItem>
+                  <SelectItem value="Security">Security</SelectItem>
+                  <SelectItem value="Infrastructure">Infrastructure</SelectItem>
+                  <SelectItem value="Environmental">Environmental</SelectItem>
                 </SelectContent>
               </Select>
 
-              <Select>
+              <Select value={priorityFilter} onValueChange={(value) => setPriorityFilter(value as AlertPriority | "ALL") }>
                 <SelectTrigger className="border-2 border-gray-200">
                   <AlertTriangle className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="All Priorities" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Priorities</SelectItem>
-                  <SelectItem value="high">High Priority</SelectItem>
-                  <SelectItem value="medium">Medium Priority</SelectItem>
-                  <SelectItem value="low">Low Priority</SelectItem>
+                  <SelectItem value="ALL">All Priorities</SelectItem>
+                  <SelectItem value="HIGH">High Priority</SelectItem>
+                  <SelectItem value="MEDIUM">Medium Priority</SelectItem>
+                  <SelectItem value="LOW">Low Priority</SelectItem>
                 </SelectContent>
               </Select>
 
-              <Select>
+              <Select value={dateFilter} onValueChange={(value) => setDateFilter(value as typeof DATE_FILTER_VALUES[number])}>
                 <SelectTrigger className="border-2 border-gray-200">
                   <Calendar className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Date Range" />
@@ -237,28 +241,28 @@ export function BrowseAlertsPage() {
         {/* Quick Filter Tags */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
           <Button size="sm" className="bg-[#001f3f] hover:bg-[#003366] text-white whitespace-nowrap">
-            All ({mockAlerts.length})
+            All ({totalAlerts})
           </Button>
           <Button variant="outline" size="sm" className="border-2 border-red-300 text-red-700 hover:bg-red-50 whitespace-nowrap">
-            High Priority (3)
+            High Priority ({highPriorityAlerts})
           </Button>
           <Button variant="outline" size="sm" className="border-2 border-blue-300 text-blue-700 hover:bg-blue-50 whitespace-nowrap">
-            New (2)
+            New ({newAlerts})
           </Button>
           <Button variant="outline" size="sm" className="border-2 border-yellow-300 text-yellow-700 hover:bg-yellow-50 whitespace-nowrap">
-            In Progress (3)
+            In Progress ({inProgressAlerts})
           </Button>
           <Button variant="outline" size="sm" className="border-2 border-green-300 text-green-700 hover:bg-green-50 whitespace-nowrap">
-            Resolved (2)
+            Resolved ({resolvedAlerts})
           </Button>
         </div>
 
         {/* Results Summary */}
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-gray-600">
-            Showing <span className="font-medium">{mockAlerts.length}</span> alerts
+            Showing <span className="font-medium">{filteredAlerts.length}</span> alerts
           </p>
-          <Select defaultValue="recent">
+          <Select value="recent">
             <SelectTrigger className="w-48 border-2 border-gray-200 h-9">
               <SelectValue />
             </SelectTrigger>
@@ -271,46 +275,63 @@ export function BrowseAlertsPage() {
           </Select>
         </div>
 
-        {/* Alerts Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          {mockAlerts.map((alert) => (
-            <Link key={alert.id} to={`/alert/${alert.id}`}>
-              <Card className="p-5 border-2 border-gray-200 hover:border-[#001f3f] transition-colors cursor-pointer h-full shadow-sm hover:shadow-md">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <div className="w-10 h-10 bg-[#001f3f]/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                      {getCategoryIcon(alert.category)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-[#001f3f] mb-1 line-clamp-2">{alert.title}</h3>
-                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">{alert.description}</p>
-                    </div>
-                  </div>
-                </div>
+        {errorMessage ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 mb-4">
+            {errorMessage}
+          </div>
+        ) : null}
 
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
-                  <MapPin className="w-4 h-4 flex-shrink-0" />
-                  <span className="truncate">{alert.location}</span>
-                </div>
+        {isLoading ? (
+          <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-600">
+            Loading alerts...
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {filteredAlerts.length > 0 ? (
+              filteredAlerts.map((alert) => (
+                <Link key={alert.id} to={`/alert/${alert.id}`}>
+                  <Card className="p-5 border-2 border-gray-200 hover:border-[#001f3f] transition-colors cursor-pointer h-full shadow-sm hover:shadow-md">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div className="w-10 h-10 bg-[#001f3f]/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                          {getCategoryIcon(alert.category)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-[#001f3f] mb-1 line-clamp-2">{alert.description.split("\n")[0] || alert.category}</h3>
+                          <p className="text-sm text-gray-600 mb-2 line-clamp-2">{alert.description}</p>
+                        </div>
+                      </div>
+                    </div>
 
-                <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                  <div className="flex items-center gap-2">
-                    <Badge className={`border text-xs ${getStatusColor(alert.status)}`}>
-                      {alert.status}
-                    </Badge>
-                    <Badge className={`border text-xs ${getPriorityColor(alert.priority)}`}>
-                      {alert.priority}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
-                    <Clock className="w-3 h-3" />
-                    <span>{alert.time}</span>
-                  </div>
-                </div>
-              </Card>
-            </Link>
-          ))}
-        </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
+                      <MapPin className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">{alert.locationText || alert.geocodedAddress || "Unknown location"}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <Badge className={`border text-xs ${getStatusColor(alert.status)}`}>
+                          {alert.status}
+                        </Badge>
+                        <Badge className={`border text-xs ${getPriorityColor(alert.priority)}`}>
+                          {alert.priority}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <Clock className="w-3 h-3" />
+                        <span>{formatAlertTime(alert.createdAt)}</span>
+                      </div>
+                    </div>
+                  </Card>
+                </Link>
+              ))
+            ) : (
+              <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-600">
+                No alerts match your search or filters.
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Load More */}
         <div className="text-center">

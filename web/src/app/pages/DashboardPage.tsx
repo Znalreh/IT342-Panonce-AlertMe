@@ -1,9 +1,12 @@
 import { Link } from "react-router";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Card } from "../components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { fetchAlerts } from "../api/alerts";
+import type { AlertData, AlertStatus } from "../api/alerts";
 import {
   AlertTriangle,
   Plus,
@@ -20,79 +23,76 @@ import {
 } from "lucide-react";
 
 export function DashboardPage() {
-  const mockAlerts = [
-    {
-      id: "1",
-      title: "Broken Light in Parking Lot B",
-      category: "Infrastructure",
-      status: "Investigating",
-      location: "Parking Lot B, Section 3",
-      time: "15 mins ago",
-      priority: "Medium",
-      description: "Several lights are not working in the north section",
-    },
-    {
-      id: "2",
-      title: "Suspicious Activity Near Library",
-      category: "Security",
-      status: "Received",
-      location: "Main Library, East Entrance",
-      time: "1 hour ago",
-      priority: "High",
-      description: "Unknown individual attempting to access restricted area",
-    },
-    {
-      id: "3",
-      title: "Water Leak in Building A",
-      category: "Infrastructure",
-      status: "Resolved",
-      location: "Building A, Room 402",
-      time: "3 hours ago",
-      priority: "High",
-      description: "Ceiling leak causing water damage",
-    },
-    {
-      id: "4",
-      title: "Icy Walkway Near Dormitory",
-      category: "Environmental",
-      status: "Received",
-      location: "West Dormitory Main Path",
-      time: "5 hours ago",
-      priority: "High",
-      description: "Walkway extremely slippery due to ice formation",
-    },
-    {
-      id: "5",
-      title: "Broken Door Lock",
-      category: "Infrastructure",
-      status: "Investigating",
-      location: "Engineering Building, Room 205",
-      time: "1 day ago",
-      priority: "Medium",
-      description: "Door lock not functioning properly",
-    },
-  ];
+  const [alerts, setAlerts] = useState<AlertData[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<AlertStatus | "ALL">("ALL");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const getStatusColor = (status: string) => {
+  useEffect(() => {
+    async function loadAlerts() {
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      try {
+        const data = await fetchAlerts();
+        setAlerts(data);
+      } catch (error) {
+        setErrorMessage(error instanceof Error ? error.message : "Unable to load alerts.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadAlerts();
+  }, []);
+
+  const filteredAlerts = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    return alerts.filter((alert) => {
+      const matchesStatus = statusFilter === "ALL" || alert.status === statusFilter;
+      const combined = [
+        alert.category,
+        alert.description,
+        alert.locationText,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      const matchesSearch = !normalizedSearch || combined.includes(normalizedSearch);
+      return matchesStatus && matchesSearch;
+    });
+  }, [alerts, searchTerm, statusFilter]);
+
+  const totalAlerts = alerts.length;
+  const activeAlerts = alerts.filter((alert) => alert.status !== "RESOLVED").length;
+  const resolvedAlerts = alerts.filter((alert) => alert.status === "RESOLVED").length;
+  const highPriorityAlerts = alerts.filter((alert) => alert.priority === "HIGH").length;
+
+  const recentAlerts = filteredAlerts.slice(0, 5);
+
+  const getStatusColor = (status: AlertStatus) => {
     switch (status) {
-      case "Received":
+      case "RECEIVED":
         return "bg-blue-100 text-blue-800 border-blue-300";
-      case "Investigating":
+      case "INVESTIGATING":
         return "bg-yellow-100 text-yellow-800 border-yellow-300";
-      case "Resolved":
+      case "RESOLVED":
         return "bg-green-100 text-green-800 border-green-300";
       default:
         return "bg-gray-100 text-gray-800 border-gray-300";
     }
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: AlertData["priority"]) => {
     switch (priority) {
-      case "High":
+      case "HIGH":
         return "bg-red-100 text-red-800 border-red-300";
-      case "Medium":
+      case "MEDIUM":
         return "bg-orange-100 text-orange-800 border-orange-300";
-      case "Low":
+      case "LOW":
         return "bg-gray-100 text-gray-800 border-gray-300";
       default:
         return "bg-gray-100 text-gray-800 border-gray-300";
@@ -110,6 +110,19 @@ export function DashboardPage() {
       default:
         return <AlertTriangle className="w-4 h-4" />;
     }
+  };
+
+  const formatAlertTime = (timestamp?: string) => {
+    if (!timestamp) {
+      return "Unknown time";
+    }
+
+    return new Date(timestamp).toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
   };
 
   return (
@@ -156,7 +169,7 @@ export function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Total Alerts</p>
-                <p className="text-2xl font-bold text-[#001f3f]">127</p>
+                <p className="text-2xl font-bold text-[#001f3f]">{totalAlerts}</p>
               </div>
               <div className="w-12 h-12 bg-[#001f3f]/10 rounded-lg flex items-center justify-center">
                 <AlertTriangle className="w-6 h-6 text-[#001f3f]" />
@@ -168,7 +181,7 @@ export function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Active</p>
-                <p className="text-2xl font-bold text-yellow-600">23</p>
+                <p className="text-2xl font-bold text-yellow-600">{activeAlerts}</p>
               </div>
               <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                 <Clock className="w-6 h-6 text-yellow-600" />
@@ -180,7 +193,7 @@ export function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Resolved</p>
-                <p className="text-2xl font-bold text-green-600">98</p>
+                <p className="text-2xl font-bold text-green-600">{resolvedAlerts}</p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                 <Shield className="w-6 h-6 text-green-600" />
@@ -192,7 +205,7 @@ export function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">High Priority</p>
-                <p className="text-2xl font-bold text-red-600">6</p>
+                <p className="text-2xl font-bold text-red-600">{highPriorityAlerts}</p>
               </div>
               <div className="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
                 <AlertCircle className="w-6 h-6 text-red-600" />
@@ -206,22 +219,24 @@ export function DashboardPage() {
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <Input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Search alerts by location, category, or description..."
               className="pl-10 border-2 border-gray-200"
             />
           </div>
 
           <div className="flex gap-2">
-            <Select>
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as AlertStatus | "ALL")}>
               <SelectTrigger className="w-40 border-2 border-gray-200">
                 <Filter className="w-4 h-4 mr-2" />
                 <SelectValue placeholder="Filter" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="received">Received</SelectItem>
-                <SelectItem value="investigating">Investigating</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
+                <SelectItem value="ALL">All Status</SelectItem>
+                <SelectItem value="RECEIVED">Received</SelectItem>
+                <SelectItem value="INVESTIGATING">Investigating</SelectItem>
+                <SelectItem value="RESOLVED">Resolved</SelectItem>
               </SelectContent>
             </Select>
 
@@ -262,48 +277,66 @@ export function DashboardPage() {
         <div>
           <h2 className="text-lg font-semibold text-[#001f3f] mb-4">Recent Alerts</h2>
 
-          <div className="space-y-4">
-            {mockAlerts.map((alert) => (
-              <Link key={alert.id} to={`/alert/${alert.id}`}>
-                <Card className="p-5 border-2 border-gray-200 hover:border-[#001f3f] transition-colors cursor-pointer shadow-sm hover:shadow-md">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-start gap-3 flex-1">
-                      <div className="w-10 h-10 bg-[#001f3f]/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                        {getCategoryIcon(alert.category)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-[#001f3f] mb-1">{alert.title}</h3>
-                        <p className="text-sm text-gray-600 mb-2 line-clamp-2">{alert.description}</p>
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <MapPin className="w-4 h-4" />
-                          <span className="truncate">{alert.location}</span>
+          {errorMessage ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 mb-4">
+              {errorMessage}
+            </div>
+          ) : null}
+
+          {isLoading ? (
+            <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-600">
+              Loading alerts...
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {recentAlerts.length > 0 ? (
+                recentAlerts.map((alert) => (
+                  <Link key={alert.id} to={`/alert/${alert.id}`}>
+                    <Card className="p-5 border-2 border-gray-200 hover:border-[#001f3f] transition-colors cursor-pointer shadow-sm hover:shadow-md">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-start gap-3 flex-1">
+                          <div className="w-10 h-10 bg-[#001f3f]/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                            {getCategoryIcon(alert.category)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-[#001f3f] mb-1">{alert.description.split("\n")[0] || alert.category}</h3>
+                            <p className="text-sm text-gray-600 mb-2 line-clamp-2">{alert.description}</p>
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                              <MapPin className="w-4 h-4" />
+                              <span className="truncate">{alert.locationText}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-2 ml-4">
+                          <Badge className={`border ${getStatusColor(alert.status)} whitespace-nowrap`}>
+                            {alert.status}
+                          </Badge>
+                          <Badge className={`border ${getPriorityColor(alert.priority)} whitespace-nowrap`}>
+                            {alert.priority}
+                          </Badge>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex flex-col items-end gap-2 ml-4">
-                      <Badge className={`border ${getStatusColor(alert.status)} whitespace-nowrap`}>
-                        {alert.status}
-                      </Badge>
-                      <Badge className={`border ${getPriorityColor(alert.priority)} whitespace-nowrap`}>
-                        {alert.priority}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <Clock className="w-3 h-3" />
-                      <span>{alert.time}</span>
-                    </div>
-                    <Badge variant="outline" className="text-xs border-gray-200">
-                      {alert.category}
-                    </Badge>
-                  </div>
-                </Card>
-              </Link>
-            ))}
-          </div>
+                      <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <Clock className="w-3 h-3" />
+                          <span>{formatAlertTime(alert.createdAt)}</span>
+                        </div>
+                        <Badge variant="outline" className="text-xs border-gray-200">
+                          {alert.category}
+                        </Badge>
+                      </div>
+                    </Card>
+                  </Link>
+                ))
+              ) : (
+                <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-600">
+                  No alerts match your search or filters.
+                </div>
+              )}
+            </div>
+          )}
 
           {/* View All Button */}
           <div className="text-center mt-6">

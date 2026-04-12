@@ -24,6 +24,44 @@ interface CreateAlertResponse {
   id: string;
 }
 
+export type AlertStatus = "RECEIVED" | "INVESTIGATING" | "RESOLVED";
+
+export interface AlertData {
+  id: string;
+  category: string;
+  priority: AlertPriority;
+  status: AlertStatus;
+  description: string;
+  locationText: string;
+  latitude?: number;
+  longitude?: number;
+  geocodedAddress?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  resolvedAt?: string;
+}
+
+export async function fetchAlerts(): Promise<AlertData[]> {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated.");
+  }
+
+  const response = await fetch(buildApiUrl("/api/v1/alerts"), {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const responseBody = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = responseBody?.message ?? "Could not load alerts.";
+    throw new Error(message);
+  }
+
+  return responseBody as AlertData[];
+}
+
 export async function createAlert(payload: CreateAlertPayload): Promise<CreateAlertResponse> {
   const token = getAuthToken();
   if (!token) {
