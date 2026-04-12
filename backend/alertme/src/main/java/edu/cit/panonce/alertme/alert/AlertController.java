@@ -5,16 +5,20 @@ import edu.cit.panonce.alertme.entity.Alert;
 import edu.cit.panonce.alertme.entity.User;
 import edu.cit.panonce.alertme.repository.AlertRepository;
 import edu.cit.panonce.alertme.repository.UserRepository;
+import edu.cit.panonce.alertme.alert.dto.AlertResponse;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -93,6 +97,31 @@ public class AlertController {
             "message", "Alert reported successfully.",
             "id", savedAlert.getId().toString()
         ));
+    }
+
+    @GetMapping
+    public List<AlertResponse> getAlerts() {
+        return alertRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
+            .stream()
+            .map(this::toResponse)
+            .toList();
+    }
+
+    private AlertResponse toResponse(Alert alert) {
+        AlertResponse response = new AlertResponse();
+        response.setId(alert.getId());
+        response.setCategory(alert.getCategory());
+        response.setPriority(alert.getPriority().name());
+        response.setStatus(alert.getStatus().name());
+        response.setDescription(alert.getDescription());
+        response.setLocationText(alert.getLocationText());
+        response.setLatitude(alert.getLatitude());
+        response.setLongitude(alert.getLongitude());
+        response.setGeocodedAddress(alert.getGeocodedAddress());
+        response.setCreatedAt(alert.getCreatedAt() != null ? alert.getCreatedAt().toString() : null);
+        response.setUpdatedAt(alert.getUpdatedAt() != null ? alert.getUpdatedAt().toString() : null);
+        response.setResolvedAt(alert.getResolvedAt() != null ? alert.getResolvedAt().toString() : null);
+        return response;
     }
 
     private String extractPrincipalName(Authentication authentication) {
