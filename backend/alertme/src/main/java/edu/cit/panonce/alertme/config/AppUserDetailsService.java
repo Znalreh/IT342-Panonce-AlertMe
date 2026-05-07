@@ -1,7 +1,8 @@
 package edu.cit.panonce.alertme.config;
 
-import edu.cit.panonce.alertme.entity.User;
-import edu.cit.panonce.alertme.repository.UserRepository;
+import edu.cit.panonce.alertme.user.entity.User;
+import edu.cit.panonce.alertme.user.repository.UserRepository;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

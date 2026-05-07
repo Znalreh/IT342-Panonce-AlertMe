@@ -1,4 +1,4 @@
-package edu.cit.panonce.alertme.entity;
+package edu.cit.panonce.alertme.alert.entity;
 
 import jakarta.persistence.*;
 
@@ -7,6 +7,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import edu.cit.panonce.alertme.user.entity.User;
 
 @Entity
 @Table(

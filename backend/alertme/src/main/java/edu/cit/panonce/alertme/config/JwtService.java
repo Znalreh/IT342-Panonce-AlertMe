@@ -1,8 +1,10 @@
 package edu.cit.panonce.alertme.config;
 
-import edu.cit.panonce.alertme.entity.User;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import edu.cit.panonce.alertme.user.entity.User;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;

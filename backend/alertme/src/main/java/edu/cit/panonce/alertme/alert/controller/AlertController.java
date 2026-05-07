@@ -1,11 +1,12 @@
-package edu.cit.panonce.alertme.alert;
+package edu.cit.panonce.alertme.alert.controller;
 
 import edu.cit.panonce.alertme.alert.dto.AlertRequest;
-import edu.cit.panonce.alertme.entity.Alert;
-import edu.cit.panonce.alertme.entity.User;
-import edu.cit.panonce.alertme.repository.AlertRepository;
-import edu.cit.panonce.alertme.repository.UserRepository;
+import edu.cit.panonce.alertme.user.entity.User;
+import edu.cit.panonce.alertme.user.repository.UserRepository;
 import edu.cit.panonce.alertme.alert.dto.AlertResponse;
+import edu.cit.panonce.alertme.alert.entity.Alert;
+import edu.cit.panonce.alertme.alert.repository.AlertRepository;
+
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

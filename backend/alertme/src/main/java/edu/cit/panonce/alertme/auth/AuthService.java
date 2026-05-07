@@ -4,8 +4,9 @@ import edu.cit.panonce.alertme.auth.dto.AuthResponse;
 import edu.cit.panonce.alertme.auth.dto.LoginRequest;
 import edu.cit.panonce.alertme.auth.dto.RegisterRequest;
 import edu.cit.panonce.alertme.config.JwtService;
-import edu.cit.panonce.alertme.entity.User;
-import edu.cit.panonce.alertme.repository.UserRepository;
+import edu.cit.panonce.alertme.user.entity.User;
+import edu.cit.panonce.alertme.user.repository.UserRepository;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
