@@ -1,7 +1,8 @@
-package edu.cit.panonce.alertme.repository;
+package edu.cit.panonce.alertme.user.repository;
 
-import edu.cit.panonce.alertme.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import edu.cit.panonce.alertme.user.entity.User;
 
 import java.util.Optional;
 import java.util.UUID;
