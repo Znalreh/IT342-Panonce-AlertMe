@@ -31,6 +31,7 @@ export function BrowseAlertsPage() {
   const [categoryFilter, setCategoryFilter] = useState<typeof CATEGORY_FILTER_VALUES[number]>("ALL");
   const [priorityFilter, setPriorityFilter] = useState<AlertPriority | "ALL">("ALL");
   const [dateFilter, setDateFilter] = useState<typeof DATE_FILTER_VALUES[number]>("all");
+  const [quickFilter, setQuickFilter] = useState<"ALL" | "HIGH_PRIORITY" | "NEW" | "IN_PROGRESS" | "RESOLVED">("ALL");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -240,19 +241,69 @@ export function BrowseAlertsPage() {
 
         {/* Quick Filter Tags */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-          <Button size="sm" className="bg-[#001f3f] hover:bg-[#003366] text-white whitespace-nowrap">
+          <Button
+            variant="outline"
+            size="sm"
+            className={`whitespace-nowrap ${quickFilter === "ALL" ? "bg-[#001f3f] text-white border-[#001f3f]" : "border-2 border-gray-200 text-gray-700 hover:border-[#001f3f] hover:text-[#001f3f]"}`}
+            onClick={() => {
+              setQuickFilter("ALL");
+              setStatusFilter("ALL");
+              setPriorityFilter("ALL");
+              setCategoryFilter("ALL");
+            }}
+          >
             All ({totalAlerts})
           </Button>
-          <Button variant="outline" size="sm" className="border-2 border-red-300 text-red-700 hover:bg-red-50 whitespace-nowrap">
+          <Button
+            variant="outline"
+            size="sm"
+            className={`whitespace-nowrap ${quickFilter === "HIGH_PRIORITY" ? "bg-[#001f3f] text-white border-[#001f3f]" : "border-2 border-red-300 text-red-700 hover:bg-red-50"}`}
+            onClick={() => {
+              setQuickFilter("HIGH_PRIORITY");
+              setPriorityFilter("HIGH");
+              setStatusFilter("ALL");
+              setCategoryFilter("ALL");
+            }}
+          >
             High Priority ({highPriorityAlerts})
           </Button>
-          <Button variant="outline" size="sm" className="border-2 border-blue-300 text-blue-700 hover:bg-blue-50 whitespace-nowrap">
+          <Button
+            variant="outline"
+            size="sm"
+            className={`whitespace-nowrap ${quickFilter === "NEW" ? "bg-[#001f3f] text-white border-[#001f3f]" : "border-2 border-blue-300 text-blue-700 hover:bg-blue-50"}`}
+            onClick={() => {
+              setQuickFilter("NEW");
+              setStatusFilter("RECEIVED");
+              setPriorityFilter("ALL");
+              setCategoryFilter("ALL");
+            }}
+          >
             New ({newAlerts})
           </Button>
-          <Button variant="outline" size="sm" className="border-2 border-yellow-300 text-yellow-700 hover:bg-yellow-50 whitespace-nowrap">
-            In Progress ({inProgressAlerts})
+          <Button
+            variant="outline"
+            size="sm"
+            className={`whitespace-nowrap ${quickFilter === "IN_PROGRESS" ? "bg-[#001f3f] text-white border-[#001f3f]" : "border-2 border-yellow-300 text-yellow-700 hover:bg-yellow-50"}`}
+            onClick={() => {
+              setQuickFilter("IN_PROGRESS");
+              setStatusFilter("INVESTIGATING");
+              setPriorityFilter("ALL");
+              setCategoryFilter("ALL");
+            }}
+          >
+            Investifating ({inProgressAlerts})
           </Button>
-          <Button variant="outline" size="sm" className="border-2 border-green-300 text-green-700 hover:bg-green-50 whitespace-nowrap">
+          <Button
+            variant="outline"
+            size="sm"
+            className={`whitespace-nowrap ${quickFilter === "RESOLVED" ? "bg-[#001f3f] text-white border-[#001f3f]" : "border-2 border-green-300 text-green-700 hover:bg-green-50"}`}
+            onClick={() => {
+              setQuickFilter("RESOLVED");
+              setStatusFilter("RESOLVED");
+              setPriorityFilter("ALL");
+              setCategoryFilter("ALL");
+            }}
+          >
             Resolved ({resolvedAlerts})
           </Button>
         </div>

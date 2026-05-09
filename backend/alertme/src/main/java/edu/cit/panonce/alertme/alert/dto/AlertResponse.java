@@ -1,6 +1,7 @@
 package edu.cit.panonce.alertme.alert.dto;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 public class AlertResponse {
@@ -17,6 +18,9 @@ public class AlertResponse {
     private String createdAt;
     private String updatedAt;
     private String resolvedAt;
+    private String reporterEmail;
+    private List<AlertMediaResponse> mediaAttachments;
+    private List<AlertStatusHistoryEntryResponse> statusHistory;
 
     public AlertResponse() {
     }
@@ -115,5 +119,29 @@ public class AlertResponse {
 
     public void setResolvedAt(String resolvedAt) {
         this.resolvedAt = resolvedAt;
+    }
+
+    public String getReporterEmail() {
+        return reporterEmail;
+    }
+
+    public void setReporterEmail(String reporterEmail) {
+        this.reporterEmail = reporterEmail;
+    }
+
+    public List<AlertMediaResponse> getMediaAttachments() {
+        return mediaAttachments;
+    }
+
+    public void setMediaAttachments(List<AlertMediaResponse> mediaAttachments) {
+        this.mediaAttachments = mediaAttachments;
+    }
+
+    public List<AlertStatusHistoryEntryResponse> getStatusHistory() {
+        return statusHistory;
+    }
+
+    public void setStatusHistory(List<AlertStatusHistoryEntryResponse> statusHistory) {
+        this.statusHistory = statusHistory;
     }
 }

@@ -8,6 +8,7 @@ import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Card } from "../components/ui/card";
+import { LocationMap } from "../components/LocationMap";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -70,6 +71,15 @@ export function ReportAlertPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // GPS-related state
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [geocodedAddress, setGeocodedAddress] = useState<string>("");
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+
+  // File attachments state
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
   useEffect(() => {
     if (useGPS && !locationText.trim()) {
       setLocationText("Engineering Building");
@@ -89,6 +99,117 @@ export function ReportAlertPage() {
       window.clearTimeout(timer);
     };
   }, [navigate, successMessage]);
+
+  // Get current GPS location
+  const getCurrentLocation = () => {
+    setIsGettingLocation(true);
+    setErrorMessage(null);
+
+    if (!navigator.geolocation) {
+      setErrorMessage("Geolocation is not supported by this browser.");
+      setIsGettingLocation(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude: lat, longitude: lng } = position.coords;
+        setLatitude(lat);
+        setLongitude(lng);
+
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
+          );
+          const data = await response.json();
+          const address = data.display_name || undefined;
+
+          if (address) {
+            setGeocodedAddress(address);
+            if (!locationText.trim()) {
+              setLocationText(address);
+            }
+          }
+        } catch (error) {
+          console.error('Reverse geocoding failed:', error);
+        }
+
+        setIsGettingLocation(false);
+      },
+      (error) => {
+        let errorMsg = "Unable to get your location.";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMsg = "Location access denied. Please enable location permissions.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMsg = "Location information is unavailable.";
+            break;
+          case error.TIMEOUT:
+            errorMsg = "Location request timed out.";
+            break;
+        }
+        setErrorMessage(errorMsg);
+        setIsGettingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000, // 5 minutes
+      }
+    );
+  };
+
+  // Handle GPS toggle
+  const handleGPSToggle = () => {
+    const newUseGPS = !useGPS;
+    setUseGPS(newUseGPS);
+
+    if (newUseGPS && !latitude && !longitude) {
+      getCurrentLocation();
+    }
+  };
+
+  // Handle location selection from map
+  const handleLocationSelect = async (lat: number, lng: number, address?: string) => {
+    setLatitude(lat);
+    setLongitude(lng);
+
+    if (address) {
+      setGeocodedAddress(address);
+      // Auto-fill location text with selected address
+      setLocationText(address);
+    }
+  };
+
+  // Handle file selection
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      // Filter for images and videos, max 10MB each
+      const validFiles = newFiles.filter(file => {
+        const isValidType = file.type.startsWith('image/') || file.type.startsWith('video/');
+        const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
+        return isValidType && isValidSize;
+      });
+      setSelectedFiles(prev => [...prev, ...validFiles].slice(0, 10)); // Max 10 files
+    }
+  };
+
+  // Remove a file
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Format file size
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -118,9 +239,10 @@ export function ReportAlertPage() {
         title: title.trim(),
         description: description.trim(),
         locationText: finalLocation,
-        latitude: useGPS ? 40.7128 : undefined,
-        longitude: useGPS ? -74.0060 : undefined,
-        geocodedAddress: useGPS ? "Approximate GPS location" : undefined,
+        latitude: useGPS && latitude ? latitude : undefined,
+        longitude: useGPS && longitude ? longitude : undefined,
+        geocodedAddress: useGPS && geocodedAddress ? geocodedAddress : undefined,
+        files: selectedFiles.length > 0 ? selectedFiles : undefined,
       });
       setSuccessMessage("Your alert has been submitted. Thank you for keeping the campus safe.");
       setTitle("");
@@ -130,6 +252,13 @@ export function ReportAlertPage() {
       if (!useGPS) {
         setLocationText("");
       }
+      // Reset GPS state
+      setLatitude(null);
+      setLongitude(null);
+      setGeocodedAddress("");
+      setUseGPS(false);
+      // Reset files
+      setSelectedFiles([]);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not submit alert.");
     } finally {
@@ -161,15 +290,7 @@ export function ReportAlertPage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-6 pb-20">
-        <Card className="p-4 mb-6 border-2 border-blue-300 bg-blue-50">
-          <div className="flex items-start gap-3">
-            <CloudRain className="w-5 h-5 text-blue-600 mt-0.5" />
-            <div className="flex-1">
-              <h3 className="font-semibold text-blue-900 mb-1">Weather Alert</h3>
-              <p className="text-sm text-blue-700">Current: 28°F, Icy conditions. Be cautious of slippery surfaces.</p>
-            </div>
-          </div>
-        </Card>
+        
 
         {errorMessage && (
           <Card className="p-4 mb-6 border border-red-200 bg-red-50 text-red-700">
@@ -235,17 +356,34 @@ export function ReportAlertPage() {
                 variant="outline"
                 size="sm"
                 className="border-2 border-[#001f3f] text-[#001f3f] hover:bg-[#001f3f] hover:text-white"
-                onClick={() => setUseGPS(!useGPS)}
+                onClick={handleGPSToggle}
+                disabled={isGettingLocation}
               >
                 <Locate className="w-4 h-4 mr-2" />
-                {useGPS ? "GPS Active" : "Use GPS"}
+                {isGettingLocation ? "Getting Location..." : useGPS ? "GPS Active" : "Use Map GPS"}
               </Button>
             </div>
 
             {useGPS && (
-              <div className="mb-3 p-3 bg-green-50 border border-green-300 rounded-lg flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-green-600" />
-                <span className="text-sm text-green-700">GPS location acquired: 40.7128° N, 74.0060° W</span>
+              <div className="mb-4">
+                <div className="mb-3 p-3 bg-green-50 border border-green-300 rounded-lg flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-green-600" />
+                  <span className="text-sm text-green-700">
+                    {latitude && longitude
+                      ? `Location selected: ${latitude.toFixed(6)}° N, ${longitude.toFixed(6)}° W`
+                      : "Getting your location..."
+                    }
+                  </span>
+                </div>
+
+                {latitude && longitude && (
+                  <LocationMap
+                    latitude={latitude}
+                    longitude={longitude}
+                    onLocationSelect={handleLocationSelect}
+                    className="rounded-lg border-2 border-gray-200 overflow-hidden"
+                  />
+                )}
               </div>
             )}
 
@@ -329,36 +467,62 @@ export function ReportAlertPage() {
           <Card className="p-5 border-2 border-gray-200 shadow-md">
             <Label className="text-[#001f3f] font-semibold mb-3 block">Attachments (Optional)</Label>
 
-            <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center hover:border-[#001f3f] transition-colors cursor-pointer">
+            <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center hover:border-[#001f3f] transition-colors">
               <div className="w-12 h-12 bg-[#001f3f]/10 rounded-lg mx-auto mb-3 flex items-center justify-center">
                 <Upload className="w-6 h-6 text-[#001f3f]" />
               </div>
               <p className="text-sm font-medium text-[#001f3f] mb-1">Upload photos or videos</p>
-              <p className="text-xs text-gray-500 mb-3">PNG, JPG, MP4 up to 10MB each</p>
+              <p className="text-xs text-gray-500 mb-3">PNG, JPG, MP4 up to 10MB each (max 10 files)</p>
               <div className="flex items-center justify-center gap-2">
-                <Button type="button" size="sm" variant="outline" className="border-2 border-gray-200 hover:border-[#001f3f]">
-                  <Camera className="w-4 h-4 mr-2" />
-                  Take Photo
-                </Button>
-                <Button type="button" size="sm" variant="outline" className="border-2 border-gray-200 hover:border-[#001f3f]">
+                <label
+                  htmlFor="file-input"
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border-2 border-gray-200 rounded-md hover:border-[#001f3f] hover:text-[#001f3f] cursor-pointer transition-colors"
+                >
                   <Upload className="w-4 h-4 mr-2" />
                   Choose Files
-                </Button>
+                </label>
+                <input
+                  id="file-input"
+                  type="file"
+                  multiple
+                  accept="image/*,video/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
               </div>
             </div>
 
-            <div className="mt-3 space-y-2">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                <div className="w-12 h-12 bg-[#001f3f]/10 rounded flex-shrink-0"></div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#001f3f] truncate">IMG_2024_001.jpg</p>
-                  <p className="text-xs text-gray-500">2.4 MB</p>
-                </div>
-                <Button type="button" variant="ghost" size="icon">
-                  <X className="w-4 h-4" />
-                </Button>
+            {selectedFiles.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {selectedFiles.map((file, index) => (
+                  <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                    <div className="w-12 h-12 bg-[#001f3f]/10 rounded flex-shrink-0 flex items-center justify-center">
+                      {file.type.startsWith('image/') ? (
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={file.name}
+                          className="w-full h-full object-cover rounded"
+                        />
+                      ) : (
+                        <CloudRain className="w-6 h-6 text-[#001f3f]" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-[#001f3f] truncate">{file.name}</p>
+                      <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeFile(index)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
           </Card>
 
           <div className="flex justify-end">
