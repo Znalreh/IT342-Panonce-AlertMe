@@ -17,6 +17,7 @@ export interface CreateAlertPayload {
   latitude?: number;
   longitude?: number;
   geocodedAddress?: string;
+  files?: File[];
 }
 
 interface CreateAlertResponse {
@@ -25,6 +26,25 @@ interface CreateAlertResponse {
 }
 
 export type AlertStatus = "RECEIVED" | "INVESTIGATING" | "RESOLVED";
+
+export interface AlertStatusHistoryEntry {
+  id: string;
+  fromStatus?: AlertStatus;
+  toStatus: AlertStatus;
+  comment?: string;
+  changedByName: string;
+  createdAt: string;
+}
+
+export interface AlertMedia {
+  id: string;
+  mediaType: "PHOTO" | "VIDEO";
+  mimeType: string;
+  storageKey: string;
+  originalFilename: string;
+  fileSizeBytes: number;
+  createdAt: string;
+}
 
 export interface AlertData {
   id: string;
@@ -39,6 +59,9 @@ export interface AlertData {
   createdAt?: string;
   updatedAt?: string;
   resolvedAt?: string;
+  reporterEmail?: string;
+  mediaAttachments?: AlertMedia[];
+  statusHistory?: AlertStatusHistoryEntry[];
 }
 
 export async function fetchAlerts(): Promise<AlertData[]> {
@@ -62,19 +85,57 @@ export async function fetchAlerts(): Promise<AlertData[]> {
   return responseBody as AlertData[];
 }
 
+export async function postAlertComment(alertId: string, comment: string): Promise<AlertStatusHistoryEntry> {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated.");
+  }
+
+  const response = await fetch(buildApiUrl(`/api/v1/alerts/${alertId}/comment`), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ comment }),
+  });
+
+  const responseBody = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = responseBody?.message ?? "Could not post comment.";
+    throw new Error(message);
+  }
+
+  return responseBody as AlertStatusHistoryEntry;
+}
+
 export async function createAlert(payload: CreateAlertPayload): Promise<CreateAlertResponse> {
   const token = getAuthToken();
   if (!token) {
     throw new Error("Not authenticated.");
   }
 
+  const formData = new FormData();
+  formData.append('category', payload.category);
+  formData.append('priority', payload.priority);
+  formData.append('locationText', payload.locationText);
+  if (payload.title) formData.append('title', payload.title);
+  if (payload.description) formData.append('description', payload.description);
+  if (payload.latitude !== undefined) formData.append('latitude', payload.latitude.toString());
+  if (payload.longitude !== undefined) formData.append('longitude', payload.longitude.toString());
+  if (payload.geocodedAddress) formData.append('geocodedAddress', payload.geocodedAddress);
+  if (payload.files) {
+    payload.files.forEach((file) => {
+      formData.append('files', file);
+    });
+  }
+
   const response = await fetch(buildApiUrl("/api/v1/alerts"), {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(payload),
+    body: formData,
   });
 
   const responseBody = await response.json().catch(() => null);

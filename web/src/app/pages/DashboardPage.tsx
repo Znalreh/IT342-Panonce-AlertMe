@@ -6,6 +6,7 @@ import { Badge } from "../components/ui/badge";
 import { Card } from "../components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { fetchAlerts } from "../api/alerts";
+import { getCurrentUser } from "../api/auth";
 import type { AlertData, AlertStatus } from "../api/alerts";
 import {
   AlertTriangle,
@@ -26,6 +27,9 @@ export function DashboardPage() {
   const [alerts, setAlerts] = useState<AlertData[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<AlertStatus | "ALL">("ALL");
+  const [categoryFilter, setCategoryFilter] = useState<"ALL" | "Security" | "Infrastructure" | "Environmental">("ALL");
+  const [showMyReports, setShowMyReports] = useState(false);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -47,11 +51,26 @@ export function DashboardPage() {
     loadAlerts();
   }, []);
 
+  useEffect(() => {
+    async function loadCurrentUser() {
+      try {
+        const profile = await getCurrentUser();
+        setCurrentUserEmail(profile.email.toLowerCase());
+      } catch {
+        setCurrentUserEmail(null);
+      }
+    }
+
+    loadCurrentUser();
+  }, []);
+
   const filteredAlerts = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
     return alerts.filter((alert) => {
       const matchesStatus = statusFilter === "ALL" || alert.status === statusFilter;
+      const matchesCategory = categoryFilter === "ALL" || alert.category === categoryFilter;
+      const matchesReporter = !showMyReports || (currentUserEmail != null && alert.reporterEmail?.toLowerCase() === currentUserEmail);
       const combined = [
         alert.category,
         alert.description,
@@ -62,9 +81,9 @@ export function DashboardPage() {
         .toLowerCase();
 
       const matchesSearch = !normalizedSearch || combined.includes(normalizedSearch);
-      return matchesStatus && matchesSearch;
+      return matchesStatus && matchesCategory && matchesReporter && matchesSearch;
     });
-  }, [alerts, searchTerm, statusFilter]);
+  }, [alerts, searchTerm, statusFilter, categoryFilter, showMyReports, currentUserEmail]);
 
   const totalAlerts = alerts.length;
   const activeAlerts = alerts.filter((alert) => alert.status !== "RESOLVED").length;
@@ -251,23 +270,50 @@ export function DashboardPage() {
 
         {/* Quick Actions */}
         <div className="flex gap-3 mb-6 overflow-x-auto pb-2">
-          <Link to="/browse">
-            <Button variant="outline" size="sm" className="border-2 border-[#001f3f] text-[#001f3f] hover:bg-[#001f3f] hover:text-white whitespace-nowrap">
-              All Alerts
-            </Button>
-          </Link>
-          <Button variant="outline" size="sm" className="border-2 border-gray-200 hover:border-[#001f3f] hover:text-[#001f3f] whitespace-nowrap">
-            My Reports
+          <Button
+            variant="outline"
+            size="sm"
+            className={`whitespace-nowrap ${categoryFilter === "ALL" && !showMyReports ? "bg-[#001f3f] text-white border-[#001f3f]" : "border-gray-200 text-gray-700 hover:border-[#001f3f] hover:text-[#001f3f]"}`}
+            onClick={() => {
+              setShowMyReports(false);
+              setCategoryFilter("ALL");
+            }}
+          >
+            All Alerts
           </Button>
-          <Button variant="outline" size="sm" className="border-2 border-gray-200 hover:border-[#001f3f] hover:text-[#001f3f] whitespace-nowrap">
+          <Button
+            variant="outline"
+            size="sm"
+            className={`border-2 whitespace-nowrap ${categoryFilter === "Security" ? "bg-[#001f3f] text-white border-[#001f3f]" : "border-gray-200 text-gray-700 hover:border-[#001f3f] hover:text-[#001f3f]"}`}
+            onClick={() => {
+              setShowMyReports(false);
+              setCategoryFilter("Security");
+            }}
+          >
             <Shield className="w-4 h-4 mr-1" />
             Security
           </Button>
-          <Button variant="outline" size="sm" className="border-2 border-gray-200 hover:border-[#001f3f] hover:text-[#001f3f] whitespace-nowrap">
+          <Button
+            variant="outline"
+            size="sm"
+            className={`border-2 whitespace-nowrap ${categoryFilter === "Infrastructure" ? "bg-[#001f3f] text-white border-[#001f3f]" : "border-gray-200 text-gray-700 hover:border-[#001f3f] hover:text-[#001f3f]"}`}
+            onClick={() => {
+              setShowMyReports(false);
+              setCategoryFilter("Infrastructure");
+            }}
+          >
             <Wrench className="w-4 h-4 mr-1" />
             Infrastructure
           </Button>
-          <Button variant="outline" size="sm" className="border-2 border-gray-200 hover:border-[#001f3f] hover:text-[#001f3f] whitespace-nowrap">
+          <Button
+            variant="outline"
+            size="sm"
+            className={`border-2 whitespace-nowrap ${categoryFilter === "Environmental" ? "bg-[#001f3f] text-white border-[#001f3f]" : "border-gray-200 text-gray-700 hover:border-[#001f3f] hover:text-[#001f3f]"}`}
+            onClick={() => {
+              setShowMyReports(false);
+              setCategoryFilter("Environmental");
+            }}
+          >
             <AlertCircle className="w-4 h-4 mr-1" />
             Environmental
           </Button>
