@@ -38,6 +38,11 @@
     <string name="already_account">Already have an account?</string>
     <string name="sign_in_link">Sign in here</string>
 
+    <!-- Content Descriptions -->
+    <string name="category_icon">Category Icon</string>
+    <string name="location">Location</string>
+    <string name="time">Time</string>
+
     <!-- Footer -->
     <string name="copyright">© 2026 AlertMe Platform</string>
     <string name="privacy_policy">Privacy Policy</string>

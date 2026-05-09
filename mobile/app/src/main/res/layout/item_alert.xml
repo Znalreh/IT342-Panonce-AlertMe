@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cardView"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@color/surface"
+    android:foreground="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- Rest of the layout remains the same -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Header with Icon and Title -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <!-- Category Icon -->
+            <FrameLayout
+                android:layout_width="48dp"
+                android:layout_height="48dp">
+
+                <ImageView
+                    android:id="@+id/ivCategoryIcon"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/ic_warning"
+                    android:background="@drawable/bg_icon_circle"
+                    android:padding="12dp"
+                    android:tint="@color/navy_blue"
+                    android:contentDescription="@string/category_icon" />
+
+            </FrameLayout>
+
+            <!-- Title and Description -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="12dp">
+
+                <TextView
+                    android:id="@+id/tvAlertTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Broken Light in Parking Lot B"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:textColor="@color/navy_blue"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    tools:text="Broken Light in Parking Lot B" />
+
+                <TextView
+                    android:id="@+id/tvAlertDescription"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Several lights are not working in the north section"
+                    android:textSize="14sp"
+                    android:textColor="@color/gray_600"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:layout_marginTop="4dp"
+                    tools:text="Several lights are not working" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Location -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_location"
+                android:tint="@color/gray_600"
+                android:contentDescription="@string/location" />
+
+            <TextView
+                android:id="@+id/tvLocation"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Parking Lot B, Section 3"
+                android:textSize="13sp"
+                android:textColor="@color/gray_600"
+                android:layout_marginStart="6dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                tools:text="Parking Lot B, Section 3" />
+
+        </LinearLayout>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Footer with Badges and Time -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- Status Badge -->
+            <TextView
+                android:id="@+id/tvStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Investigating"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:paddingVertical="4dp"
+                android:paddingHorizontal="10dp"
+                android:background="@drawable/bg_badge_warning"
+                android:textColor="@color/status_yellow_dark"
+                tools:text="Investigating" />
+
+            <!-- Priority Badge -->
+            <TextView
+                android:id="@+id/tvPriority"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Medium"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:paddingVertical="4dp"
+                android:paddingHorizontal="10dp"
+                android:background="@drawable/bg_badge_priority_medium"
+                android:textColor="@color/priority_medium_text"
+                android:layout_marginStart="8dp"
+                tools:text="Medium" />
+
+            <!-- Spacer -->
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <!-- Time -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:src="@drawable/ic_clock"
+                    android:tint="@color/gray_600"
+                    android:contentDescription="@string/time" />
+
+                <TextView
+                    android:id="@+id/tvTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="15 mins ago"
+                    android:textSize="12sp"
+                    android:textColor="@color/gray_600"
+                    android:layout_marginStart="4dp"
+                    tools:text="15 mins ago" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>
