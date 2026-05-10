@@ -95,14 +95,12 @@ export function LandingPage() {
             </nav>
 
             <div className="flex items-center gap-3">
-              <Link to="/login" className="hidden md:block">
-                <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-[#001f3f] text-[#000000]">Login</Button>
-              </Link>
-              <Link to="/register">
-                <Button className="bg-red-600 hover:bg-red-700 text-white">
-                  Sign Up
-                </Button>
-              </Link>
+              <Button asChild variant="outline" className="hidden md:block border-2 border-white text-white hover:bg-white hover:text-[#001f3f] text-[#000000]">
+                <Link to="/login">Login</Link>
+              </Button>
+              <Button asChild className="bg-red-600 hover:bg-red-700 text-white">
+                <Link to="/register">Sign Up</Link>
+              </Button>
               <Button variant="ghost" size="icon" className="md:hidden text-white hover:bg-[#003366]">
                 <Menu className="w-5 h-5" />
               </Button>
@@ -125,12 +123,12 @@ export function LandingPage() {
                 Report infrastructure issues or security concerns directly from your device with full transparency.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/register">
-                  <Button size="lg" className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto">
+                <Button asChild size="lg" className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto">
+                  <Link to="/register">
                     Get Started
                     <ChevronRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
                 <a href="#features">
                   <Button size="lg" variant="outline" className="border-2 border-[#001f3f] text-[#001f3f] hover:bg-[#001f3f] hover:text-white w-full sm:w-auto">
                     Learn More

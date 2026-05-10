@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
@@ -24,6 +25,7 @@ import {
 } from "lucide-react";
 
 export function DashboardPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [alerts, setAlerts] = useState<AlertData[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<AlertStatus | "ALL">("ALL");
@@ -32,6 +34,16 @@ export function DashboardPage() {
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check for error parameter in URL
+    const error = searchParams.get("error");
+    if (error === "access_denied") {
+      setErrorMessage("Access denied. Admin privileges required to view the admin dashboard.");
+      // Clear the error from URL
+      setSearchParams(new URLSearchParams());
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     async function loadAlerts() {
@@ -49,6 +61,20 @@ export function DashboardPage() {
     }
 
     loadAlerts();
+  }, []);
+
+  // Add polling for real-time updates
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const data = await fetchAlerts();
+        setAlerts(data);
+      } catch (error) {
+        console.error("Failed to poll alerts:", error);
+      }
+    }, 15000); // Poll every 15 seconds
+
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {

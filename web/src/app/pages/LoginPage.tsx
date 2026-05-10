@@ -6,7 +6,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Separator } from "../components/ui/separator";
 import { AlertTriangle } from "lucide-react";
-import { getGoogleAuthUrl, loginUser, saveAuthToken } from "../api/auth";
+import { getAuthToken, getGoogleAuthUrl, loginUser, saveAuthToken, getDashboardRoute } from "../api/auth";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -16,16 +16,30 @@ export function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const accessToken = params.get("accessToken");
+    async function handleOAuthCallback() {
+      const params = new URLSearchParams(window.location.search);
+      const accessToken = params.get("accessToken");
 
-    if (!accessToken) {
-      return;
+      if (!accessToken) {
+        return;
+      }
+
+      saveAuthToken(accessToken);
+      window.history.replaceState({}, "", "/login");
+
+      const dashboardRoute = await getDashboardRoute();
+      navigate(dashboardRoute, { replace: true });
     }
 
-    saveAuthToken(accessToken);
-    window.history.replaceState({}, "", "/login");
-    navigate("/dashboard", { replace: true });
+    handleOAuthCallback();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!window.location.search && getAuthToken()) {
+      getDashboardRoute().then((dashboardRoute) => {
+        navigate(dashboardRoute, { replace: true });
+      });
+    }
   }, [navigate]);
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
@@ -39,7 +53,10 @@ export function LoginPage() {
         password,
       });
       saveAuthToken(auth.accessToken);
-      navigate("/dashboard");
+      
+      // Navigate to appropriate dashboard based on user role
+      const dashboardRoute = await getDashboardRoute();
+      navigate(dashboardRoute);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to sign in. Please try again.";
       setErrorMessage(message);

@@ -8,7 +8,7 @@ import { AlertDetailPage } from "./pages/AlertDetailPage";
 import { AdminDashboardPage } from "./pages/AdminDashboardPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { BrowseAlertsPage } from "./pages/BrowseAlertsPage";
-import { getAuthToken } from "./api/auth";
+import { getAuthToken, getCurrentUser, saveAuthToken } from "./api/auth";
 
 function requireAuth() {
   if (!getAuthToken()) {
@@ -17,11 +17,78 @@ function requireAuth() {
   return null;
 }
 
-function redirectIfAuthenticated() {
-  if (getAuthToken()) {
-    throw redirect("/dashboard");
+async function requireStudentDashboard() {
+  if (!getAuthToken()) {
+    throw redirect("/login");
   }
+
+  try {
+    const user = await getCurrentUser();
+    if (user.role !== "STUDENT") {
+      throw new Response("Not Found", { status: 404 });
+    }
+  } catch (error) {
+    if (error instanceof Response) {
+      throw error;
+    }
+    // If we can't get user info, redirect to login
+    throw redirect("/login");
+  }
+
   return null;
+}
+
+async function requireAdmin() {
+  if (!getAuthToken()) {
+    throw redirect("/login");
+  }
+
+  try {
+    const user = await getCurrentUser();
+    if (user.role === "STUDENT") {
+      throw new Response("Not Found", { status: 404 });
+    }
+    // Allow ADMIN, STAFF, SECURITY roles
+  } catch (error) {
+    if (error instanceof Response) {
+      throw error;
+    }
+    // If we can't get user info, redirect to login
+    throw redirect("/login");
+  }
+
+  return null;
+}
+
+async function redirectAuthenticatedUser({ request }: { request: Request }) {
+  const url = new URL(request.url);
+  const accessToken = url.searchParams.get("accessToken");
+
+  if (accessToken) {
+    saveAuthToken(accessToken);
+
+    try {
+      const user = await getCurrentUser();
+      return redirect(user.role === "STUDENT" ? "/dashboard" : "/admin");
+    } catch (error) {
+      return redirect("/login");
+    }
+  }
+
+  if (!getAuthToken()) {
+    return null;
+  }
+
+  try {
+    const user = await getCurrentUser();
+    if (user.role === "STUDENT") {
+      return redirect("/dashboard");
+    } else {
+      return redirect("/admin");
+    }
+  } catch (error) {
+    return null;
+  }
 }
 
 export const router = createBrowserRouter([
@@ -31,17 +98,17 @@ export const router = createBrowserRouter([
   },
   {
     path: "/login",
-    loader: redirectIfAuthenticated,
+    loader: redirectAuthenticatedUser,
     Component: LoginPage,
   },
   {
     path: "/register",
-    loader: redirectIfAuthenticated,
+    loader: redirectAuthenticatedUser,
     Component: RegisterPage,
   },
   {
     path: "/dashboard",
-    loader: requireAuth,
+    loader: requireStudentDashboard,
     Component: DashboardPage,
   },
   {
@@ -56,7 +123,7 @@ export const router = createBrowserRouter([
   },
   {
     path: "/admin",
-    loader: requireAuth,
+    loader: requireAdmin,
     Component: AdminDashboardPage,
   },
   {
@@ -69,4 +136,6 @@ export const router = createBrowserRouter([
     loader: requireAuth,
     Component: BrowseAlertsPage,
   },
+  
+
 ]);

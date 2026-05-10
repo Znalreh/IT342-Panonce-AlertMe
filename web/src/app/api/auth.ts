@@ -93,6 +93,7 @@ export async function getCurrentUser(): Promise<UserProfile> {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+    credentials: "include",
   });
 
   if (response.ok) {
@@ -126,4 +127,38 @@ export function clearAuthToken(): void {
 
 export function getGoogleAuthUrl(): string {
   return buildApiUrl("/oauth2/authorization/google");
+}
+
+export function processOAuthCallback(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const accessToken = params.get("accessToken");
+
+  if (!accessToken) {
+    return false;
+  }
+
+  saveAuthToken(accessToken);
+
+  const { pathname, hash } = window.location;
+  const cleanUrl = `${pathname}${hash}`;
+
+  if (window.location.search) {
+    window.location.replace(cleanUrl);
+  }
+
+  return true;
+}
+
+export async function getDashboardRoute(): Promise<string> {
+  try {
+    const user = await getCurrentUser();
+    return user.role === "STUDENT" ? "/dashboard" : "/admin";
+  } catch (error) {
+    // If we can't get user info, default to student dashboard
+    return "/dashboard";
+  }
 }
