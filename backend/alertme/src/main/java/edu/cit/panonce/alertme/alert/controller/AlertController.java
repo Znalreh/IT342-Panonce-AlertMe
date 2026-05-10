@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/alerts")
 public class AlertController {
@@ -242,6 +244,257 @@ public class AlertController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    // Admin endpoints
+    @PutMapping("/{alertId}/status")
+    public ResponseEntity<?> updateAlertStatus(
+            @PathVariable("alertId") String alertId,
+            @RequestBody Map<String, String> payload,
+            Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized"));
+        }
+
+        String username = extractPrincipalName(authentication);
+        if (username == null || username.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized"));
+        }
+
+        User admin = userRepository.findByEmailIgnoreCase(username)
+            .or(() -> userRepository.findByGoogleSubject(username))
+            .orElse(null);
+
+        if (admin == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "User not found"));
+        }
+
+        // Check if user has admin privileges
+        if (admin.getRole() != User.UserRole.ADMIN && admin.getRole() != User.UserRole.SECURITY && admin.getRole() != User.UserRole.STAFF) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Insufficient privileges"));
+        }
+
+        Alert alert;
+        try {
+            UUID uuid = UUID.fromString(alertId);
+            alert = alertRepository.findById(uuid).orElse(null);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid alert ID"));
+        }
+
+        if (alert == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String newStatusStr = payload.getOrDefault("status", "").trim().toUpperCase();
+        if (newStatusStr.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Status is required"));
+        }
+
+        Alert.AlertStatus newStatus;
+        try {
+            newStatus = Alert.AlertStatus.valueOf(newStatusStr);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid status value"));
+        }
+
+        String comment = payload.getOrDefault("comment", "").trim();
+
+        Alert.AlertStatus oldStatus = alert.getStatus();
+        alert.setStatus(newStatus);
+
+        if (newStatus == Alert.AlertStatus.RESOLVED) {
+            alert.setResolvedAt(java.time.Instant.now());
+        } else if (oldStatus == Alert.AlertStatus.RESOLVED && newStatus != Alert.AlertStatus.RESOLVED) {
+            alert.setResolvedAt(null);
+        }
+
+        Alert savedAlert = alertRepository.save(alert);
+
+        // Create status history entry
+        AlertStatusHistory history = new AlertStatusHistory();
+        history.setAlert(savedAlert);
+        history.setChangedBy(admin);
+        history.setFromStatus(oldStatus);
+        history.setToStatus(newStatus);
+        if (!comment.isEmpty()) {
+            history.setComment(comment);
+        }
+
+        alertStatusHistoryRepository.save(history);
+
+        return ResponseEntity.ok(Map.of("message", "Alert status updated successfully"));
+    }
+
+    @PutMapping("/{alertId}/assign")
+    public ResponseEntity<?> assignAlert(
+            @PathVariable("alertId") String alertId,
+            @RequestBody Map<String, String> payload,
+            Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized"));
+        }
+
+        String username = extractPrincipalName(authentication);
+        if (username == null || username.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized"));
+        }
+
+        User admin = userRepository.findByEmailIgnoreCase(username)
+            .or(() -> userRepository.findByGoogleSubject(username))
+            .orElse(null);
+
+        if (admin == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "User not found"));
+        }
+
+        // Check if user has admin privileges
+        if (admin.getRole() != User.UserRole.ADMIN && admin.getRole() != User.UserRole.SECURITY && admin.getRole() != User.UserRole.STAFF) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Insufficient privileges"));
+        }
+
+        Alert alert;
+        try {
+            UUID uuid = UUID.fromString(alertId);
+            alert = alertRepository.findById(uuid).orElse(null);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid alert ID"));
+        }
+
+        if (alert == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String assignedUserIdStr = payload.getOrDefault("assignedToUserId", "").trim();
+        User assignedUser = null;
+
+        if (!assignedUserIdStr.isEmpty()) {
+            try {
+                UUID assignedUserId = UUID.fromString(assignedUserIdStr);
+                assignedUser = userRepository.findById(assignedUserId).orElse(null);
+                if (assignedUser == null) {
+                    return ResponseEntity.badRequest().body(Map.of("message", "Assigned user not found"));
+                }
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Invalid user ID"));
+            }
+        }
+
+        alert.setAssignedTo(assignedUser);
+        alertRepository.save(alert);
+
+        return ResponseEntity.ok(Map.of("message", "Alert assignment updated successfully"));
+    }
+
+    @GetMapping("/admin/stats")
+    public ResponseEntity<?> getAdminStats(Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized"));
+        }
+
+        String username = extractPrincipalName(authentication);
+        if (username == null || username.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized"));
+        }
+
+        User admin = userRepository.findByEmailIgnoreCase(username)
+            .or(() -> userRepository.findByGoogleSubject(username))
+            .orElse(null);
+
+        if (admin == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "User not found"));
+        }
+
+        // Check if user has admin privileges
+        if (admin.getRole() != User.UserRole.ADMIN && admin.getRole() != User.UserRole.SECURITY && admin.getRole() != User.UserRole.STAFF) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Insufficient privileges"));
+        }
+
+        List<Alert> allAlerts = alertRepository.findAll();
+
+        long totalAlerts = allAlerts.size();
+        long receivedAlerts = allAlerts.stream().filter(a -> a.getStatus() == Alert.AlertStatus.RECEIVED).count();
+        long investigatingAlerts = allAlerts.stream().filter(a -> a.getStatus() == Alert.AlertStatus.INVESTIGATING).count();
+        long resolvedAlerts = allAlerts.stream().filter(a -> a.getStatus() == Alert.AlertStatus.RESOLVED).count();
+
+        return ResponseEntity.ok(Map.of(
+            "totalAlerts", totalAlerts,
+            "receivedAlerts", receivedAlerts,
+            "investigatingAlerts", investigatingAlerts,
+            "resolvedAlerts", resolvedAlerts
+        ));
+    }
+
+    @GetMapping("/admin")
+    @Transactional(readOnly = true)
+    public List<AlertResponse> getAlertsForAdmin(
+            @RequestParam(value = "status", required = false) String statusFilter,
+            @RequestParam(value = "category", required = false) String categoryFilter,
+            @RequestParam(value = "priority", required = false) String priorityFilter,
+            @RequestParam(value = "search", required = false) String searchQuery,
+            Authentication authentication) {
+        if (authentication == null) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        String username = extractPrincipalName(authentication);
+        if (username == null || username.isBlank()) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        User admin = userRepository.findByEmailIgnoreCase(username)
+            .or(() -> userRepository.findByGoogleSubject(username))
+            .orElse(null);
+
+        if (admin == null) {
+            throw new RuntimeException("User not found");
+        }
+
+        // Check if user has admin privileges
+        if (admin.getRole() != User.UserRole.ADMIN && admin.getRole() != User.UserRole.SECURITY && admin.getRole() != User.UserRole.STAFF) {
+            throw new RuntimeException("Insufficient privileges");
+        }
+
+        List<Alert> alerts = alertRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        // Apply filters
+        if (statusFilter != null && !statusFilter.trim().isEmpty()) {
+            try {
+                Alert.AlertStatus status = Alert.AlertStatus.valueOf(statusFilter.trim().toUpperCase());
+                alerts = alerts.stream().filter(a -> a.getStatus() == status).collect(Collectors.toList());
+            } catch (IllegalArgumentException e) {
+                // Invalid status, ignore filter
+            }
+        }
+
+        if (categoryFilter != null && !categoryFilter.trim().isEmpty()) {
+            alerts = alerts.stream()
+                .filter(a -> a.getCategory().toLowerCase().contains(categoryFilter.trim().toLowerCase()))
+                .collect(Collectors.toList());
+        }
+
+        if (priorityFilter != null && !priorityFilter.trim().isEmpty()) {
+            try {
+                Alert.AlertPriority priority = Alert.AlertPriority.valueOf(priorityFilter.trim().toUpperCase());
+                alerts = alerts.stream().filter(a -> a.getPriority() == priority).collect(Collectors.toList());
+            } catch (IllegalArgumentException e) {
+                // Invalid priority, ignore filter
+            }
+        }
+
+        if (searchQuery != null && !searchQuery.trim().isEmpty()) {
+            String query = searchQuery.trim().toLowerCase();
+            alerts = alerts.stream()
+                .filter(a ->
+                    a.getDescription().toLowerCase().contains(query) ||
+                    a.getLocationText().toLowerCase().contains(query) ||
+                    (a.getReporter() != null && (a.getReporter().getFirstName() + " " + a.getReporter().getLastName()).toLowerCase().contains(query)) ||
+                    (a.getReporter() != null && a.getReporter().getEmail().toLowerCase().contains(query))
+                )
+                .collect(Collectors.toList());
+        }
+
+        return alerts.stream().map(this::toResponse).collect(Collectors.toList());
+    }
+
     private AlertResponse toResponse(Alert alert) {
         AlertResponse response = new AlertResponse();
         response.setId(alert.getId());
@@ -257,6 +510,11 @@ public class AlertController {
         response.setUpdatedAt(alert.getUpdatedAt() != null ? alert.getUpdatedAt().toString() : null);
         response.setResolvedAt(alert.getResolvedAt() != null ? alert.getResolvedAt().toString() : null);
         response.setReporterEmail(alert.getReporter() != null ? alert.getReporter().getEmail() : null);
+
+        if (alert.getAssignedTo() != null) {
+            response.setAssignedToName(alert.getAssignedTo().getFirstName() + " " + alert.getAssignedTo().getLastName());
+            response.setAssignedToEmail(alert.getAssignedTo().getEmail());
+        }
 
         if (alert.getMediaAttachments() != null) {
             response.setMediaAttachments(alert.getMediaAttachments().stream()

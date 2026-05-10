@@ -19,6 +19,8 @@ public class AlertResponse {
     private String updatedAt;
     private String resolvedAt;
     private String reporterEmail;
+    private String assignedToName;
+    private String assignedToEmail;
     private List<AlertMediaResponse> mediaAttachments;
     private List<AlertStatusHistoryEntryResponse> statusHistory;
 
@@ -127,6 +129,22 @@ public class AlertResponse {
 
     public void setReporterEmail(String reporterEmail) {
         this.reporterEmail = reporterEmail;
+    }
+
+    public String getAssignedToName() {
+        return assignedToName;
+    }
+
+    public void setAssignedToName(String assignedToName) {
+        this.assignedToName = assignedToName;
+    }
+
+    public String getAssignedToEmail() {
+        return assignedToEmail;
+    }
+
+    public void setAssignedToEmail(String assignedToEmail) {
+        this.assignedToEmail = assignedToEmail;
     }
 
     public List<AlertMediaResponse> getMediaAttachments() {
