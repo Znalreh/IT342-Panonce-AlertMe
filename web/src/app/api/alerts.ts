@@ -60,6 +60,8 @@ export interface AlertData {
   updatedAt?: string;
   resolvedAt?: string;
   reporterEmail?: string;
+  assignedToName?: string;
+  assignedToEmail?: string;
   mediaAttachments?: AlertMedia[];
   statusHistory?: AlertStatusHistoryEntry[];
 }
@@ -145,4 +147,118 @@ export async function createAlert(payload: CreateAlertPayload): Promise<CreateAl
   }
 
   return responseBody as CreateAlertResponse;
+}
+
+export interface AdminStats {
+  totalAlerts: number;
+  receivedAlerts: number;
+  investigatingAlerts: number;
+  resolvedAlerts: number;
+}
+
+export async function fetchAdminStats(): Promise<AdminStats> {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated.");
+  }
+
+  const response = await fetch(buildApiUrl("/api/v1/alerts/admin/stats"), {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const responseBody = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = responseBody?.message ?? "Could not load admin stats.";
+    throw new Error(message);
+  }
+
+  return responseBody as AdminStats;
+}
+
+export interface AdminAlertsFilters {
+  status?: AlertStatus;
+  category?: string;
+  priority?: AlertPriority;
+  search?: string;
+}
+
+export async function fetchAlertsForAdmin(filters?: AdminAlertsFilters): Promise<AlertData[]> {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated.");
+  }
+
+  const params = new URLSearchParams();
+  if (filters?.status) params.append('status', filters.status);
+  if (filters?.category) params.append('category', filters.category);
+  if (filters?.priority) params.append('priority', filters.priority);
+  if (filters?.search) params.append('search', filters.search);
+
+  const url = params.toString() ? `${buildApiUrl("/api/v1/alerts/admin")}?${params}` : buildApiUrl("/api/v1/alerts/admin");
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const responseBody = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = responseBody?.message ?? "Could not load alerts.";
+    throw new Error(message);
+  }
+
+  return responseBody as AlertData[];
+}
+
+export async function updateAlertStatus(alertId: string, status: AlertStatus, comment?: string): Promise<void> {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated.");
+  }
+
+  const payload: any = { status };
+  if (comment) payload.comment = comment;
+
+  const response = await fetch(buildApiUrl(`/api/v1/alerts/${alertId}/status`), {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const responseBody = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = responseBody?.message ?? "Could not update alert status.";
+    throw new Error(message);
+  }
+}
+
+export async function assignAlert(alertId: string, assignedToUserId?: string): Promise<void> {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated.");
+  }
+
+  const payload: any = {};
+  if (assignedToUserId) payload.assignedToUserId = assignedToUserId;
+
+  const response = await fetch(buildApiUrl(`/api/v1/alerts/${alertId}/assign`), {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const responseBody = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = responseBody?.message ?? "Could not assign alert.";
+    throw new Error(message);
+  }
 }

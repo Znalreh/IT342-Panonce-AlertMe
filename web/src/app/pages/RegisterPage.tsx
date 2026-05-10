@@ -5,16 +5,14 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Separator } from "../components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { AlertTriangle } from "lucide-react";
-import { getGoogleAuthUrl, registerUser, saveAuthToken } from "../api/auth";
+import { getGoogleAuthUrl, registerUser, saveAuthToken, getDashboardRoute } from "../api/auth";
 
 export function RegisterPage() {
   const navigate = useNavigate();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<"STUDENT" | "STAFF" | "SECURITY">("STUDENT");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -37,10 +35,13 @@ export function RegisterPage() {
         lastName,
         email,
         password,
-        role,
+        role: "STUDENT",
       });
       saveAuthToken(auth.accessToken);
-      navigate("/dashboard");
+      
+      // Navigate to appropriate dashboard based on user role
+      const dashboardRoute = await getDashboardRoute();
+      navigate(dashboardRoute);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to create your account. Please try again.";
       setErrorMessage(message);
@@ -107,20 +108,6 @@ export function RegisterPage() {
                   onChange={(event) => setEmail(event.target.value)}
                   required
                 />
-              </div>
-
-              <div>
-                <Label htmlFor="role" className="text-gray-700">Role</Label>
-                <Select value={role} onValueChange={(value) => setRole(value as "STUDENT" | "STAFF" | "SECURITY")}>
-                  <SelectTrigger className="mt-1 border-gray-300">
-                    <SelectValue placeholder="Select your role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="STUDENT">Student</SelectItem>
-                    <SelectItem value="STAFF">Staff</SelectItem>
-                    <SelectItem value="SECURITY">Security Guard</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
 

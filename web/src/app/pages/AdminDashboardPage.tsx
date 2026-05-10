@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
@@ -24,68 +24,139 @@ import {
   Edit,
   Trash2,
   MoreVertical,
+  Loader2,
 } from "lucide-react";
+import {
+  fetchAdminStats,
+  fetchAlertsForAdmin,
+  updateAlertStatus,
+  assignAlert,
+  type AdminStats,
+  type AlertData,
+  type AlertStatus,
+  type AlertPriority,
+  type AdminAlertsFilters,
+} from "../api/alerts";
 
 export function AdminDashboardPage() {
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [alerts, setAlerts] = useState<AlertData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [filters, setFilters] = useState<AdminAlertsFilters>({});
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTab, setSelectedTab] = useState("all");
 
-  const mockAlerts = [
-    {
-      id: "1",
-      title: "Broken Light in Parking Lot B",
-      category: "Infrastructure",
-      status: "Investigating",
-      location: "Parking Lot B, Section 3",
-      reportedBy: "John Doe",
-      time: "15 mins ago",
-      priority: "Medium",
-      assignedTo: "Maintenance Team",
-    },
-    {
-      id: "2",
-      title: "Suspicious Activity Near Library",
-      category: "Security",
-      status: "Received",
-      location: "Main Library, East Entrance",
-      reportedBy: "Sarah Smith",
-      time: "1 hour ago",
-      priority: "High",
-      assignedTo: "Not Assigned",
-    },
-    {
-      id: "3",
-      title: "Water Leak in Building A",
-      category: "Infrastructure",
-      status: "Resolved",
-      location: "Building A, Room 402",
-      reportedBy: "Mike Johnson",
-      time: "3 hours ago",
-      priority: "High",
-      assignedTo: "Plumbing Services",
-    },
-    {
-      id: "4",
-      title: "Icy Walkway Near Dormitory",
-      category: "Environmental",
-      status: "Received",
-      location: "West Dormitory Main Path",
-      reportedBy: "Emily Chen",
-      time: "5 hours ago",
-      priority: "High",
-      assignedTo: "Not Assigned",
-    },
-    {
-      id: "5",
-      title: "Broken Door Lock",
-      category: "Infrastructure",
-      status: "Investigating",
-      location: "Engineering Building, Room 205",
-      reportedBy: "Alex Brown",
-      time: "1 day ago",
-      priority: "Medium",
-      assignedTo: "Security Team",
-    },
-  ];
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  useEffect(() => {
+    loadAlerts();
+  }, [filters, selectedTab]);
+
+  // Add polling for real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadAlerts();
+    }, 15000); // Poll every 15 seconds
+
+    return () => clearInterval(interval);
+  }, [filters, selectedTab]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [statsData, alertsData] = await Promise.all([
+        fetchAdminStats(),
+        fetchAlertsForAdmin()
+      ]);
+      setStats(statsData);
+      setAlerts(alertsData);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load admin data.";
+      console.error("Failed to load admin data:", error);
+      setError(message);
+      setAlerts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadAlerts = async () => {
+    try {
+      setError(null);
+      const tabFilters: AdminAlertsFilters = { ...filters };
+      if (selectedTab === "new") {
+        tabFilters.status = "RECEIVED";
+      } else if (selectedTab === "active") {
+        tabFilters.status = "INVESTIGATING";
+      } else if (selectedTab === "resolved") {
+        tabFilters.status = "RESOLVED";
+      }
+
+      if (searchQuery.trim()) {
+        tabFilters.search = searchQuery.trim();
+      }
+
+      const alertsData = await fetchAlertsForAdmin(tabFilters);
+      setAlerts(alertsData);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load alerts.";
+      console.error("Failed to load alerts:", error);
+      setError(message);
+      setAlerts([]);
+    }
+  };
+
+  const handleStatusChange = async (alertId: string, newStatus: AlertStatus) => {
+    try {
+      setUpdatingStatus(alertId);
+      await updateAlertStatus(alertId, newStatus);
+      // Update local state immediately for better UX
+      setAlerts(prev => prev.map(alert => 
+        alert.id === alertId ? { ...alert, status: newStatus } : alert
+      ));
+      // Refresh stats as well
+      loadData();
+    } catch (error) {
+      console.error("Failed to update alert status:", error);
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
+
+  const handleSearch = () => {
+    loadAlerts();
+  };
+
+  const handleFilterChange = (key: keyof AdminAlertsFilters, value: string) => {
+    const newFilters = { ...filters };
+    if (value === "all" || value === "") {
+      delete newFilters[key];
+    } else {
+      (newFilters as any)[key] = value;
+    }
+    setFilters(newFilters);
+  };
+
+  const getFilteredAlerts = () => {
+    return alerts;
+  };
+
+  const mockAlerts = alerts.map(alert => ({
+    id: alert.id,
+    title: alert.description.split('\n')[0] || alert.description,
+    category: alert.category,
+    status: alert.status,
+    location: alert.locationText,
+    reportedBy: alert.reporterEmail || "Unknown",
+    time: alert.createdAt ? new Date(alert.createdAt).toLocaleString() : "Unknown",
+    priority: alert.priority,
+    assignedTo: alert.assignedToName || "Not Assigned",
+  }));
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -135,7 +206,7 @@ export function AdminDashboardPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" className="hidden md:flex border-2 border-white text-white hover:bg-white hover:text-[#001f3f]">
+              <Button variant="outline" size="sm" className="hidden md:flex border-2 border-white text-[#001f3f] hover:bg-white hover:text-[#001f3f]">
                 <Download className="w-4 h-4 mr-2" />
                 Export
               </Button>
@@ -164,8 +235,10 @@ export function AdminDashboardPage() {
                 <AlertTriangle className="w-4 h-4 text-gray-600" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-gray-900">127</p>
-            <p className="text-xs text-gray-500 mt-1">+12 from last week</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats?.totalAlerts || 0}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">All time</p>
           </Card>
 
           <Card className="p-4 border-2 border-blue-300 bg-blue-50">
@@ -175,7 +248,9 @@ export function AdminDashboardPage() {
                 <AlertCircle className="w-4 h-4 text-blue-700" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-blue-900">6</p>
+            <p className="text-2xl font-bold text-blue-900">
+              {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats?.receivedAlerts || 0}
+            </p>
             <p className="text-xs text-blue-600 mt-1">Needs assignment</p>
           </Card>
 
@@ -186,7 +261,9 @@ export function AdminDashboardPage() {
                 <Clock className="w-4 h-4 text-yellow-700" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-yellow-900">23</p>
+            <p className="text-2xl font-bold text-yellow-900">
+              {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats?.investigatingAlerts || 0}
+            </p>
             <p className="text-xs text-yellow-600 mt-1">Active investigations</p>
           </Card>
 
@@ -197,7 +274,9 @@ export function AdminDashboardPage() {
                 <CheckCircle className="w-4 h-4 text-green-700" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-green-900">98</p>
+            <p className="text-2xl font-bold text-green-900">
+              {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats?.resolvedAlerts || 0}
+            </p>
             <p className="text-xs text-green-600 mt-1">This month</p>
           </Card>
         </div>
@@ -219,12 +298,12 @@ export function AdminDashboardPage() {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="all" className="space-y-4">
+        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
           <TabsList className="bg-white border-2 border-gray-300">
-            <TabsTrigger value="all">All Alerts</TabsTrigger>
-            <TabsTrigger value="new">New</TabsTrigger>
-            <TabsTrigger value="active">Active</TabsTrigger>
-            <TabsTrigger value="resolved">Resolved</TabsTrigger>
+            <TabsTrigger value="all">All Alerts ({stats?.totalAlerts || 0})</TabsTrigger>
+            <TabsTrigger value="new">New ({stats?.receivedAlerts || 0})</TabsTrigger>
+            <TabsTrigger value="active">Active ({stats?.investigatingAlerts || 0})</TabsTrigger>
+            <TabsTrigger value="resolved">Resolved ({stats?.resolvedAlerts || 0})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">
@@ -236,35 +315,41 @@ export function AdminDashboardPage() {
                   <Input
                     placeholder="Search by ID, title, location, or reporter..."
                     className="pl-10 border-2 border-gray-300"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   />
                 </div>
-                
+
                 <div className="flex gap-2">
-                  <Select>
+                  <Select value={filters.category ?? "all"} onValueChange={(value) => handleFilterChange('category', value)}>
                     <SelectTrigger className="w-40 border-2 border-gray-300">
                       <SelectValue placeholder="Category" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Categories</SelectItem>
-                      <SelectItem value="security">Security</SelectItem>
-                      <SelectItem value="infrastructure">Infrastructure</SelectItem>
-                      <SelectItem value="environmental">Environmental</SelectItem>
+                      <SelectItem value="Security">Security</SelectItem>
+                      <SelectItem value="Infrastructure">Infrastructure</SelectItem>
+                      <SelectItem value="Environmental">Environmental</SelectItem>
+                      <SelectItem value="Academic">Academic</SelectItem>
+                      <SelectItem value="Health">Health</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
 
-                  <Select>
+                  <Select value={filters.priority ?? "all"} onValueChange={(value) => handleFilterChange('priority', value)}>
                     <SelectTrigger className="w-40 border-2 border-gray-300">
                       <SelectValue placeholder="Priority" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Priorities</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="HIGH">High</SelectItem>
+                      <SelectItem value="MEDIUM">Medium</SelectItem>
+                      <SelectItem value="LOW">Low</SelectItem>
                     </SelectContent>
                   </Select>
 
-                  <Button variant="outline" size="icon" className="border-2 border-gray-300">
+                  <Button variant="outline" size="icon" className="border-2 border-gray-300" onClick={handleSearch}>
                     <Filter className="w-4 h-4" />
                   </Button>
                 </div>
@@ -272,6 +357,11 @@ export function AdminDashboardPage() {
             </Card>
 
             {/* Alerts Table */}
+            {error && !loading && (
+              <Card className="p-4 border-2 border-red-200 bg-red-50 text-red-700 mb-4">
+                {error}
+              </Card>
+            )}
             <Card className="border-2 border-gray-300 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -290,7 +380,17 @@ export function AdminDashboardPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {mockAlerts.map((alert) => (
+                    {mockAlerts.length === 0 ? (
+                      <tr>
+                        <td className="px-4 py-8 text-center text-sm text-gray-500" colSpan={7}>
+                          {loading ? (
+                            <span>Loading alerts...</span>
+                          ) : (
+                            <span>No alerts found. Confirm the backend is running and that your account has admin access.</span>
+                          )}
+                        </td>
+                      </tr>
+                    ) : mockAlerts.map((alert) => (
                       <tr key={alert.id} className="hover:bg-gray-50">
                         <td className="px-4 py-4">
                           <div className="flex items-start gap-3">
@@ -310,7 +410,11 @@ export function AdminDashboardPage() {
                           </div>
                         </td>
                         <td className="px-4 py-4">
-                          <Select defaultValue={alert.status.toLowerCase()}>
+                          <Select
+                            value={alert.status.toLowerCase()}
+                            onValueChange={(value) => handleStatusChange(alert.id, value.toUpperCase() as AlertStatus)}
+                            disabled={updatingStatus === alert.id}
+                          >
                             <SelectTrigger className={`w-32 h-8 text-xs border ${getStatusColor(alert.status)}`}>
                               <SelectValue />
                             </SelectTrigger>
@@ -360,13 +464,13 @@ export function AdminDashboardPage() {
               <div className="px-4 py-3 border-t-2 border-gray-300 bg-gray-50">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-gray-600">
-                    Showing <span className="font-medium">1-5</span> of <span className="font-medium">127</span> alerts
+                    Showing <span className="font-medium">1-{mockAlerts.length}</span> of <span className="font-medium">{mockAlerts.length}</span> alerts
                   </p>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" disabled className="border-2 border-gray-300">
                       Previous
                     </Button>
-                    <Button variant="outline" size="sm" className="border-2 border-gray-300">
+                    <Button variant="outline" size="sm" disabled={mockAlerts.length <= 5} className="border-2 border-gray-300">
                       Next
                     </Button>
                   </div>
@@ -376,33 +480,315 @@ export function AdminDashboardPage() {
           </TabsContent>
 
           <TabsContent value="new">
-            <Card className="p-8 border-2 border-gray-300 text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                <AlertCircle className="w-8 h-8 text-blue-600" />
+            {mockAlerts.length > 0 ? (
+              <div className="space-y-4">
+                {/* Same table structure as "all" tab */}
+                <Card className="border-2 border-gray-300 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-100 border-b-2 border-gray-300">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                            <input type="checkbox" className="mr-2" />
+                            Alert
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Status</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden md:table-cell">Priority</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden lg:table-cell">Assigned To</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden xl:table-cell">Reporter</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden md:table-cell">Time</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {mockAlerts.map((alert) => (
+                          <tr key={alert.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-4">
+                              <div className="flex items-start gap-3">
+                                <input type="checkbox" className="mt-1" />
+                                <div className="min-w-0">
+                                  <Link to={`/alert/${alert.id}`} className="font-medium text-gray-900 hover:underline block">
+                                    {alert.title}
+                                  </Link>
+                                  <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
+                                    <MapPin className="w-3 h-3" />
+                                    <span className="truncate">{alert.location}</span>
+                                  </div>
+                                  <Badge variant="outline" className="text-xs border-gray-300 mt-1">
+                                    {alert.category}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-4">
+                              <Select
+                                value={alert.status.toLowerCase()}
+                                onValueChange={(value) => handleStatusChange(alert.id, value.toUpperCase() as AlertStatus)}
+                                disabled={updatingStatus === alert.id}
+                              >
+                                <SelectTrigger className={`w-32 h-8 text-xs border ${getStatusColor(alert.status)}`}>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="received">Received</SelectItem>
+                                  <SelectItem value="investigating">Investigating</SelectItem>
+                                  <SelectItem value="resolved">Resolved</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </td>
+                            <td className="px-4 py-4 hidden md:table-cell">
+                              <Badge className={`border ${getPriorityColor(alert.priority)}`}>
+                                {alert.priority}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-4 hidden lg:table-cell">
+                              <span className="text-sm text-gray-700">{alert.assignedTo}</span>
+                            </td>
+                            <td className="px-4 py-4 hidden xl:table-cell">
+                              <span className="text-sm text-gray-700">{alert.reportedBy}</span>
+                            </td>
+                            <td className="px-4 py-4 hidden md:table-cell">
+                              <span className="text-sm text-gray-500">{alert.time}</span>
+                            </td>
+                            <td className="px-4 py-4 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Link to={`/alert/${alert.id}`}>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                </Link>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700">
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">New Alerts (6)</h3>
-              <p className="text-gray-600">Showing only alerts with "Received" status that need assignment</p>
-            </Card>
+            ) : (
+              <Card className="p-8 border-2 border-gray-300 text-center">
+                <div className="w-16 h-16 bg-blue-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                  <AlertCircle className="w-8 h-8 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No New Alerts</h3>
+                <p className="text-gray-600">All alerts have been processed. Check back later for new reports.</p>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="active">
-            <Card className="p-8 border-2 border-gray-300 text-center">
-              <div className="w-16 h-16 bg-yellow-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                <Clock className="w-8 h-8 text-yellow-600" />
+            {mockAlerts.length > 0 ? (
+              <div className="space-y-4">
+                {/* Same table structure as "all" tab */}
+                <Card className="border-2 border-gray-300 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-100 border-b-2 border-gray-300">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                            <input type="checkbox" className="mr-2" />
+                            Alert
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Status</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden md:table-cell">Priority</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden lg:table-cell">Assigned To</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden xl:table-cell">Reporter</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden md:table-cell">Time</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {mockAlerts.map((alert) => (
+                          <tr key={alert.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-4">
+                              <div className="flex items-start gap-3">
+                                <input type="checkbox" className="mt-1" />
+                                <div className="min-w-0">
+                                  <Link to={`/alert/${alert.id}`} className="font-medium text-gray-900 hover:underline block">
+                                    {alert.title}
+                                  </Link>
+                                  <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
+                                    <MapPin className="w-3 h-3" />
+                                    <span className="truncate">{alert.location}</span>
+                                  </div>
+                                  <Badge variant="outline" className="text-xs border-gray-300 mt-1">
+                                    {alert.category}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-4">
+                              <Select
+                                value={alert.status.toLowerCase()}
+                                onValueChange={(value) => handleStatusChange(alert.id, value.toUpperCase() as AlertStatus)}
+                                disabled={updatingStatus === alert.id}
+                              >
+                                <SelectTrigger className={`w-32 h-8 text-xs border ${getStatusColor(alert.status)}`}>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="received">Received</SelectItem>
+                                  <SelectItem value="investigating">Investigating</SelectItem>
+                                  <SelectItem value="resolved">Resolved</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </td>
+                            <td className="px-4 py-4 hidden md:table-cell">
+                              <Badge className={`border ${getPriorityColor(alert.priority)}`}>
+                                {alert.priority}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-4 hidden lg:table-cell">
+                              <span className="text-sm text-gray-700">{alert.assignedTo}</span>
+                            </td>
+                            <td className="px-4 py-4 hidden xl:table-cell">
+                              <span className="text-sm text-gray-700">{alert.reportedBy}</span>
+                            </td>
+                            <td className="px-4 py-4 hidden md:table-cell">
+                              <span className="text-sm text-gray-500">{alert.time}</span>
+                            </td>
+                            <td className="px-4 py-4 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Link to={`/alert/${alert.id}`}>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                </Link>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700">
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Active Alerts (23)</h3>
-              <p className="text-gray-600">Showing only alerts currently being investigated</p>
-            </Card>
+            ) : (
+              <Card className="p-8 border-2 border-gray-300 text-center">
+                <div className="w-16 h-16 bg-yellow-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                  <Clock className="w-8 h-8 text-yellow-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Active Alerts</h3>
+                <p className="text-gray-600">No alerts are currently being investigated.</p>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="resolved">
-            <Card className="p-8 border-2 border-gray-300 text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                <CheckCircle className="w-8 h-8 text-green-600" />
+            {mockAlerts.length > 0 ? (
+              <div className="space-y-4">
+                {/* Same table structure as "all" tab */}
+                <Card className="border-2 border-gray-300 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-100 border-b-2 border-gray-300">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                            <input type="checkbox" className="mr-2" />
+                            Alert
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Status</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden md:table-cell">Priority</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden lg:table-cell">Assigned To</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden xl:table-cell">Reporter</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden md:table-cell">Time</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {mockAlerts.map((alert) => (
+                          <tr key={alert.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-4">
+                              <div className="flex items-start gap-3">
+                                <input type="checkbox" className="mt-1" />
+                                <div className="min-w-0">
+                                  <Link to={`/alert/${alert.id}`} className="font-medium text-gray-900 hover:underline block">
+                                    {alert.title}
+                                  </Link>
+                                  <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
+                                    <MapPin className="w-3 h-3" />
+                                    <span className="truncate">{alert.location}</span>
+                                  </div>
+                                  <Badge variant="outline" className="text-xs border-gray-300 mt-1">
+                                    {alert.category}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-4">
+                              <Select
+                                value={alert.status.toLowerCase()}
+                                onValueChange={(value) => handleStatusChange(alert.id, value.toUpperCase() as AlertStatus)}
+                                disabled={updatingStatus === alert.id}
+                              >
+                                <SelectTrigger className={`w-32 h-8 text-xs border ${getStatusColor(alert.status)}`}>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="received">Received</SelectItem>
+                                  <SelectItem value="investigating">Investigating</SelectItem>
+                                  <SelectItem value="resolved">Resolved</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </td>
+                            <td className="px-4 py-4 hidden md:table-cell">
+                              <Badge className={`border ${getPriorityColor(alert.priority)}`}>
+                                {alert.priority}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-4 hidden lg:table-cell">
+                              <span className="text-sm text-gray-700">{alert.assignedTo}</span>
+                            </td>
+                            <td className="px-4 py-4 hidden xl:table-cell">
+                              <span className="text-sm text-gray-700">{alert.reportedBy}</span>
+                            </td>
+                            <td className="px-4 py-4 hidden md:table-cell">
+                              <span className="text-sm text-gray-500">{alert.time}</span>
+                            </td>
+                            <td className="px-4 py-4 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Link to={`/alert/${alert.id}`}>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                </Link>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700">
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Resolved Alerts (98)</h3>
-              <p className="text-gray-600">Showing only alerts marked as resolved</p>
-            </Card>
+            ) : (
+              <Card className="p-8 border-2 border-gray-300 text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Resolved Alerts</h3>
+                <p className="text-gray-600">No alerts have been resolved yet.</p>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </main>

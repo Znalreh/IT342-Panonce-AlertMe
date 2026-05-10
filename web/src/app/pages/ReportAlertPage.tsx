@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { createAlert } from "../api/alerts";
+import { getDashboardRoute } from "../api/auth";
 import type { AlertPriority } from "../api/alerts";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -91,8 +92,9 @@ export function ReportAlertPage() {
       return;
     }
 
-    const timer = window.setTimeout(() => {
-      navigate("/dashboard");
+    const timer = window.setTimeout(async () => {
+      const dashboardRoute = await getDashboardRoute();
+      navigate(dashboardRoute);
     }, 4000);
 
     return () => {
