@@ -2,7 +2,9 @@ package edu.cit.panonce.alertme.media.controller;
 
 import edu.cit.panonce.alertme.alert.entity.AlertMedia;
 import edu.cit.panonce.alertme.alert.repository.AlertMediaRepository;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,14 +33,19 @@ public class MediaController {
                 return ResponseEntity.notFound().build();
             }
 
+            String storageKey = media.getStorageKey();
+            if (storageKey == null || storageKey.isBlank()) {
+                return ResponseEntity.notFound().build();
+            }
+
             // Redirect to Supabase public URL
-            String supabaseUrl = "https://rjnshudkyinfhwyrxbmh.supabase.co/storage/v1/object/public/alerts/" + media.getStorageKey();
-            
+            String supabaseUrl = "https://rjnshudkyinfhwyrxbmh.supabase.co/storage/v1/object/public/alerts/" + storageKey;
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .header("Location", supabaseUrl)
+                    .header(HttpHeaders.LOCATION, supabaseUrl)
                     .build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("message", "Invalid media ID"));
         }
     }
+
 }

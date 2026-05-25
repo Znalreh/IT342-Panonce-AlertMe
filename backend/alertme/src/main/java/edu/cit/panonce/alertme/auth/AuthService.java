@@ -1,8 +1,11 @@
 package edu.cit.panonce.alertme.auth;
 
 import edu.cit.panonce.alertme.auth.dto.AuthResponse;
+import edu.cit.panonce.alertme.auth.dto.ChangePasswordRequest;
 import edu.cit.panonce.alertme.auth.dto.LoginRequest;
 import edu.cit.panonce.alertme.auth.dto.RegisterRequest;
+import edu.cit.panonce.alertme.auth.dto.UpdateProfileRequest;
+import edu.cit.panonce.alertme.auth.dto.UserProfileResponse;
 import edu.cit.panonce.alertme.config.JwtService;
 import edu.cit.panonce.alertme.user.entity.User;
 import edu.cit.panonce.alertme.user.repository.UserRepository;
@@ -33,6 +36,45 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.jwtExpirationMs = jwtExpirationMs;
+    }
+
+    @Transactional
+    public UserProfileResponse updateProfile(User user, UpdateProfileRequest request) {
+        String firstName = sanitize(request.firstName());
+        String lastName = sanitize(request.lastName());
+
+        if (firstName.isBlank() || lastName.isBlank()) {
+            throw new IllegalArgumentException("First name and last name are required.");
+        }
+
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        User updatedUser = userRepository.save(user);
+
+        return toUserProfileResponse(updatedUser);
+    }
+
+    @Transactional
+    public void changePassword(User user, ChangePasswordRequest request) {
+        String currentPassword = request.currentPassword();
+        String newPassword = request.newPassword();
+
+        if (currentPassword == null || currentPassword.isBlank()) {
+            throw new IllegalArgumentException("Current password is required.");
+        }
+        if (newPassword == null || newPassword.isBlank()) {
+            throw new IllegalArgumentException("New password is required.");
+        }
+        if (newPassword.length() < 8) {
+            throw new IllegalArgumentException("New password must be at least 8 characters.");
+        }
+
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            throw new IllegalArgumentException("Current password is incorrect.");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 
     @Transactional
@@ -146,6 +188,18 @@ public class AuthService {
             accessToken,
             "Bearer",
             expiresAt
+        );
+    }
+
+    private UserProfileResponse toUserProfileResponse(User user) {
+        return new UserProfileResponse(
+            user.getId(),
+            user.getEmail(),
+            user.getFirstName(),
+            user.getLastName(),
+            user.getRole().name(),
+            user.getCreatedAt() != null ? user.getCreatedAt().toString() : null,
+            user.getLastLoginAt() != null ? user.getLastLoginAt().toString() : null
         );
     }
 
