@@ -9,6 +9,33 @@
 
     <body>
       <div id="root"></div>
+
+      <!-- Inline OAuth callback handler: stores accessToken from query and redirects -->
+      <script>
+        (function() {
+          try {
+            var params = new URLSearchParams(window.location.search);
+            var accessToken = params.get('accessToken');
+            if (!accessToken) return;
+
+            // Store token in localStorage using the app's key
+            localStorage.setItem('alertme_access_token', accessToken);
+            var tokenType = params.get('tokenType');
+            if (tokenType) localStorage.setItem('alertme_token_type', tokenType);
+            var expiresAt = params.get('expiresAt');
+            if (expiresAt) localStorage.setItem('alertme_expires_at', expiresAt);
+
+            // Navigate to dashboard and remove token from URL
+            var dashboard = '/dashboard';
+            window.history.replaceState({}, document.title, dashboard);
+            window.location.replace(dashboard);
+          } catch (e) {
+            // Fail silently and let the SPA handle it
+            console.error('OAuth inline handler error', e);
+          }
+        })();
+      </script>
+
       <script type="module" src="/src/main.tsx"></script>
     </body>
   </html>
