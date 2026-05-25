@@ -51,6 +51,7 @@ export interface AlertData {
   category: string;
   priority: AlertPriority;
   status: AlertStatus;
+  title?: string;
   description: string;
   locationText: string;
   latitude?: number;

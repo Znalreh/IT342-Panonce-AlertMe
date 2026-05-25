@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -25,6 +25,7 @@ const CATEGORY_FILTER_VALUES = ["ALL", "Security", "Infrastructure", "Environmen
 const DATE_FILTER_VALUES = ["all", "today", "week", "month"] as const;
 
 export function BrowseAlertsPage() {
+  const navigate = useNavigate();
   const [alerts, setAlerts] = useState<AlertData[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<AlertStatus | "ALL">("ALL");
@@ -61,7 +62,7 @@ export function BrowseAlertsPage() {
       const matchesStatus = statusFilter === "ALL" || alert.status === statusFilter;
       const matchesCategory = categoryFilter === "ALL" || alert.category === categoryFilter;
       const matchesPriority = priorityFilter === "ALL" || alert.priority === priorityFilter;
-      const combinedText = [alert.category, alert.description, alert.locationText, alert.geocodedAddress]
+      const combinedText = [alert.category, alert.title, alert.description, alert.locationText, alert.geocodedAddress]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
@@ -150,11 +151,21 @@ export function BrowseAlertsPage() {
       <header className="bg-[#001f3f] border-b-2 border-[#003366] sticky top-0 z-10 shadow-md">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
-            <Link to="/dashboard">
-              <Button variant="ghost" size="icon" className="text-white hover:bg-[#003366]">
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-[#003366]"
+              type="button"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate("/dashboard");
+                }
+              }}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
                 <AlertTriangle className="w-6 h-6 text-white" />
@@ -348,7 +359,7 @@ export function BrowseAlertsPage() {
                           {getCategoryIcon(alert.category)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-[#001f3f] mb-1 line-clamp-2">{alert.description.split("\n")[0] || alert.category}</h3>
+                          <h3 className="font-semibold text-[#001f3f] mb-1 line-clamp-2">{alert.title || alert.description.split("\n")[0] || alert.category}</h3>
                           <p className="text-sm text-gray-600 mb-2 line-clamp-2">{alert.description}</p>
                         </div>
                       </div>

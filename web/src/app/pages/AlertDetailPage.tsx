@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
@@ -136,6 +136,7 @@ function MediaThumbnail({ media, hasError, onError, onClick }: MediaThumbnailPro
 }
 
 export function AlertDetailPage() {
+  const navigate = useNavigate();
   const { id } = useParams();
   const [alert, setAlert] = useState<AlertData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -194,7 +195,15 @@ export function AlertDetailPage() {
   };
 
   const alertTitle = useMemo(() => {
-    if (!alert?.description) {
+    if (!alert) {
+      return "Campus Alert";
+    }
+
+    if (alert.title && alert.title.trim()) {
+      return alert.title;
+    }
+
+    if (!alert.description) {
       return "Campus Alert";
     }
 
@@ -222,11 +231,21 @@ export function AlertDetailPage() {
       <header className="bg-[#001f3f] border-b-2 border-[#003366] sticky top-0 z-10 shadow-md">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
-            <Link to="/dashboard">
-              <Button variant="ghost" size="icon" className="text-white hover:bg-[#003366]">
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-[#003366]"
+              type="button"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate("/dashboard");
+                }
+              }}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
             <div className="flex items-center gap-2 flex-1">
               <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
                 <AlertTriangle className="w-6 h-6 text-white" />

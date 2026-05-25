@@ -10,14 +10,14 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { BrowseAlertsPage } from "./pages/BrowseAlertsPage";
 import { getAuthToken, getCurrentUser, saveAuthToken } from "./api/auth";
 
-function requireAuth() {
+export function requireAuth() {
   if (!getAuthToken()) {
     throw redirect("/login");
   }
   return null;
 }
 
-async function requireStudentDashboard() {
+export async function requireStudentDashboard() {
   if (!getAuthToken()) {
     throw redirect("/login");
   }
@@ -38,7 +38,7 @@ async function requireStudentDashboard() {
   return null;
 }
 
-async function requireAdmin() {
+export async function requireAdmin() {
   if (!getAuthToken()) {
     throw redirect("/login");
   }
@@ -60,7 +60,7 @@ async function requireAdmin() {
   return null;
 }
 
-async function redirectAuthenticatedUser({ request }: { request: Request }) {
+export async function redirectAuthenticatedUser({ request }: { request: Request }) {
   const url = new URL(request.url);
   const accessToken = url.searchParams.get("accessToken");
 

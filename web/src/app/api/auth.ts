@@ -113,6 +113,82 @@ export async function getCurrentUser(): Promise<UserProfile> {
   throw new Error(message);
 }
 
+export interface UpdateProfilePayload {
+  firstName: string;
+  lastName: string;
+}
+
+export async function updateUserProfile(payload: UpdateProfilePayload): Promise<UserProfile> {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated.");
+  }
+
+  const response = await fetch(buildApiUrl("/api/v1/auth/me"), {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+    credentials: "include",
+  });
+
+  if (response.ok) {
+    return (await response.json()) as UserProfile;
+  }
+
+  let message = "Could not update profile.";
+  try {
+    const errorPayload = (await response.json()) as { message?: string };
+    if (errorPayload.message) {
+      message = errorPayload.message;
+    }
+  } catch {
+    // keep default error message
+  }
+
+  throw new Error(message);
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export async function changeUserPassword(payload: ChangePasswordPayload): Promise<void> {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated.");
+  }
+
+  const response = await fetch(buildApiUrl("/api/v1/auth/me/change-password"), {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+    credentials: "include",
+  });
+
+  if (response.ok) {
+    return;
+  }
+
+  let message = "Could not change password.";
+  try {
+    const errorPayload = (await response.json()) as { message?: string };
+    if (errorPayload.message) {
+      message = errorPayload.message;
+    }
+  } catch {
+    // keep default error message
+  }
+
+  throw new Error(message);
+}
+
 export function saveAuthToken(token: string): void {
   localStorage.setItem(TOKEN_STORAGE_KEY, token);
 }

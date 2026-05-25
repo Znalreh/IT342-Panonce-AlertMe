@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useSearchParams } from "react-router";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -8,6 +8,7 @@ import { Card } from "../components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { fetchAlerts } from "../api/alerts";
 import { getCurrentUser } from "../api/auth";
+import { connectToAlertStatusUpdates } from "../api/websocket";
 import type { AlertData, AlertStatus } from "../api/alerts";
 import {
   AlertTriangle,
@@ -24,6 +25,14 @@ import {
   Menu,
 } from "lucide-react";
 
+interface NotificationItem {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+}
+
 export function DashboardPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [alerts, setAlerts] = useState<AlertData[]>([]);
@@ -34,6 +43,10 @@ export function DashboardPage() {
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const unreadCount = notifications.filter((item) => !item.read).length;
+  const loadAlertsRef = useRef(() => {});
 
   useEffect(() => {
     // Check for error parameter in URL
@@ -90,6 +103,46 @@ export function DashboardPage() {
     loadCurrentUser();
   }, []);
 
+  // Connect to WebSocket for real-time updates
+  useEffect(() => {
+    const connection = connectToAlertStatusUpdates(async (update) => {
+      try {
+        const alertDisplay = update.alertTitle || `Alert ${update.alertId}`;
+        const notification: NotificationItem = {
+          id: `${update.alertId}-${update.status}-${Date.now()}`,
+          title: "Alert status updated",
+          message: `${alertDisplay} status changed to ${update.status.toLowerCase()}.`,
+          timestamp: new Date().toISOString(),
+          read: false,
+        };
+
+        setNotifications((prev) => [notification, ...prev].slice(0, 6));
+        await loadAlertsRef.current();
+      } catch (error) {
+        console.error("Failed to refresh alerts after WebSocket update:", error);
+      }
+    });
+
+    return () => connection.close();
+  }, []);
+
+  useEffect(() => {
+    loadAlertsRef.current = async () => {
+      try {
+        const data = await fetchAlerts();
+        setAlerts(data);
+      } catch (error) {
+        console.error("Failed to refresh alerts:", error);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isNotificationsOpen) {
+      setNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
+    }
+  }, [isNotificationsOpen]);
+
   const filteredAlerts = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
@@ -99,6 +152,7 @@ export function DashboardPage() {
       const matchesReporter = !showMyReports || (currentUserEmail != null && alert.reporterEmail?.toLowerCase() === currentUserEmail);
       const combined = [
         alert.category,
+        alert.title,
         alert.description,
         alert.locationText,
       ]
@@ -192,11 +246,51 @@ export function DashboardPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" className="relative text-white hover:bg-[#003366]">
+              <div className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative text-white hover:bg-[#003366]"
+                onClick={() => setIsNotificationsOpen((prev) => !prev)}
+              >
                 <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-600 rounded-full"></span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 inline-flex h-2.5 w-2.5 rounded-full bg-red-600" />
+                )}
               </Button>
-              <Link to="/profile">
+
+              {isNotificationsOpen && (
+                <div className="absolute right-0 top-full z-20 mt-2 w-[320px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+                    <span className="text-sm font-semibold text-gray-900">Notifications</span>
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-blue-600 hover:text-blue-700"
+                      onClick={() => setNotifications([])}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div className="max-h-72 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-sm text-gray-600">No new notifications.</div>
+                    ) : (
+                      notifications.map((notification) => (
+                        <div
+                          key={notification.id}
+                          className={`border-b border-gray-100 px-4 py-3 ${notification.read ? "bg-white" : "bg-blue-50"}`}
+                        >
+                          <p className="text-sm font-medium text-gray-900">{notification.title}</p>
+                          <p className="mt-1 text-xs text-gray-600">{notification.message}</p>
+                          <p className="mt-1 text-[11px] text-gray-400">{new Date(notification.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+            <Link to="/profile">
                 <Button variant="ghost" size="icon" className="text-white hover:bg-[#003366]">
                   <User className="w-5 h-5" />
                 </Button>
@@ -371,7 +465,7 @@ export function DashboardPage() {
                             {getCategoryIcon(alert.category)}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-[#001f3f] mb-1">{alert.description.split("\n")[0] || alert.category}</h3>
+                          <h3 className="font-semibold text-[#001f3f] mb-1">{alert.title || alert.description.split("\n")[0] || alert.category}</h3>
                             <p className="text-sm text-gray-600 mb-2 line-clamp-2">{alert.description}</p>
                             <div className="flex items-center gap-2 text-sm text-gray-500">
                               <MapPin className="w-4 h-4" />
