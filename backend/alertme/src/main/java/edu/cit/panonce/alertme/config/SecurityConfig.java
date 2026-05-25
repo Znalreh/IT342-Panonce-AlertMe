@@ -68,11 +68,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(
+        // Allow localhost for development and Render-hosted frontend via wildcard pattern
+        configuration.setAllowedOriginPatterns(List.of(
             "http://localhost:5173",
             "http://127.0.0.1:5173",
             "http://localhost:4173",
-            "http://127.0.0.1:4173"
+            "http://127.0.0.1:4173",
+            "https://*.onrender.com"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
