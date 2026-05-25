@@ -233,6 +233,7 @@ export function ReportAlertPage() {
     }
 
     setIsSubmitting(true);
+    console.log("Submitting alert with files:", selectedFiles);
 
     try {
       await createAlert({
@@ -261,6 +262,11 @@ export function ReportAlertPage() {
       setUseGPS(false);
       // Reset files
       setSelectedFiles([]);
+      // Reset file input
+      const fileInput = document.getElementById('file-input') as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = '';
+      }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not submit alert.");
     } finally {
@@ -273,11 +279,21 @@ export function ReportAlertPage() {
       <header className="bg-[#001f3f] border-b-2 border-[#003366] sticky top-0 z-10 shadow-md">
         <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
-            <Link to="/dashboard">
-              <Button variant="ghost" size="icon" className="text-white hover:bg-[#003366]" type="button">
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-[#003366]"
+              type="button"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate("/dashboard");
+                }
+              }}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
                 <AlertTriangle className="w-6 h-6 text-white" />
