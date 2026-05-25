@@ -61,6 +61,9 @@ public class Alert {
     @Column(name = "status", nullable = false, length = 20)
     private AlertStatus status = AlertStatus.RECEIVED;
 
+    @Column(name = "title", length = 255)
+    private String title;
+
     @Column(name = "description", nullable = false, columnDefinition = "text")
     private String description;
 
@@ -123,6 +126,9 @@ public class Alert {
 
     public AlertStatus getStatus() { return status; }
     public void setStatus(AlertStatus status) { this.status = status; }
+
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }

@@ -10,8 +10,10 @@ import edu.cit.panonce.alertme.alert.entity.AlertMedia;
 import edu.cit.panonce.alertme.alert.entity.AlertStatusHistory;
 import edu.cit.panonce.alertme.alert.repository.AlertRepository;
 import edu.cit.panonce.alertme.alert.repository.AlertMediaRepository;
+import edu.cit.panonce.alertme.alert.dto.AlertStatusUpdateMessage;
 import edu.cit.panonce.alertme.alert.repository.AlertStatusHistoryRepository;
 import edu.cit.panonce.alertme.media.service.SupabaseStorageService;
+import edu.cit.panonce.alertme.websocket.AlertStatusWebSocketHandler;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -45,16 +47,19 @@ public class AlertController {
     private final AlertMediaRepository alertMediaRepository;
     private final AlertStatusHistoryRepository alertStatusHistoryRepository;
     private final SupabaseStorageService supabaseStorageService;
+    private final AlertStatusWebSocketHandler alertStatusWebSocketHandler;
 
-    public AlertController(AlertRepository alertRepository, UserRepository userRepository, AlertMediaRepository alertMediaRepository, AlertStatusHistoryRepository alertStatusHistoryRepository, SupabaseStorageService supabaseStorageService) {
+    public AlertController(AlertRepository alertRepository, UserRepository userRepository, AlertMediaRepository alertMediaRepository, AlertStatusHistoryRepository alertStatusHistoryRepository, SupabaseStorageService supabaseStorageService, AlertStatusWebSocketHandler alertStatusWebSocketHandler) {
         this.alertRepository = alertRepository;
         this.userRepository = userRepository;
         this.alertMediaRepository = alertMediaRepository;
         this.alertStatusHistoryRepository = alertStatusHistoryRepository;
         this.supabaseStorageService = supabaseStorageService;
+        this.alertStatusWebSocketHandler = alertStatusWebSocketHandler;
     }
 
     @PostMapping(consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Transactional
     public ResponseEntity<?> createAlert(
             @RequestParam("category") String category,
             @RequestParam("priority") String priority,
@@ -64,7 +69,7 @@ public class AlertController {
             @RequestParam(value = "latitude", required = false) Double latitude,
             @RequestParam(value = "longitude", required = false) Double longitude,
             @RequestParam(value = "geocodedAddress", required = false) String geocodedAddress,
-            @RequestParam(value = "files", required = false) MultipartFile[] files,
+            @RequestParam(value = "files", required = false) java.util.List<MultipartFile> files,
             Authentication authentication) {
 
         if (authentication == null) {
@@ -108,71 +113,106 @@ public class AlertController {
             return ResponseEntity.badRequest().body(Map.of("message", "Unknown priority value."));
         }
 
-        String alertTitle = title == null ? "" : title.trim();
+        String rawTitle = title == null ? "" : title.trim();
         String alertDescription = description == null ? "" : description.trim();
-        String fullDescription = alertTitle.isEmpty() ? alertDescription : alertTitle + "\n\n" + alertDescription;
+        String alertTitle = rawTitle;
+        if (alertTitle.isEmpty() && !alertDescription.isEmpty()) {
+            int lineEnd = alertDescription.indexOf('\n');
+            if (lineEnd == -1) {
+                lineEnd = Math.min(alertDescription.length(), 255);
+            } else {
+                lineEnd = Math.min(lineEnd, 255);
+            }
+            alertTitle = alertDescription.substring(0, lineEnd).trim();
+        }
 
         Alert alert = new Alert();
         alert.setReporter(reporter);
         alert.setCategory(category.trim());
         alert.setPriority(alertPriority);
         alert.setLocationText(locationText.trim());
-        alert.setDescription(fullDescription);
+        alert.setTitle(alertTitle.isEmpty() ? null : alertTitle);
+        alert.setDescription(alertDescription);
         if (latitude != null) alert.setLatitude(java.math.BigDecimal.valueOf(latitude));
         if (longitude != null) alert.setLongitude(java.math.BigDecimal.valueOf(longitude));
         alert.setGeocodedAddress(geocodedAddress);
 
         Alert savedAlert = alertRepository.save(alert);
+        alertRepository.flush(); // Ensure alert is persisted before handling media
 
         // Handle file uploads to Supabase
-        if (files != null && files.length > 0) {
-            List<AlertMedia> mediaList = new ArrayList<>();
+        List<AlertMedia> mediaList = new ArrayList<>();
+        System.out.println("========== FILE PROCESSING START ==========");
+        System.out.println("Files parameter: " + (files == null ? "NULL" : "List of " + files.size()));
+        if (files != null && !files.isEmpty()) {
+            System.out.println("Processing " + files.size() + " files...");
             for (MultipartFile file : files) {
-                if (file.isEmpty()) continue;
+                System.out.println("Processing file: " + file.getOriginalFilename() + ", isEmpty: " + file.isEmpty() + ", size: " + file.getSize());
+                if (file.isEmpty()) {
+                    System.out.println("  -> Skipping empty file");
+                    continue;
+                }
 
                 String originalFilename = file.getOriginalFilename();
-                if (originalFilename == null) continue;
+                if (originalFilename == null) {
+                    System.out.println("  -> Skipping file with null name");
+                    continue;
+                }
 
+                // Determine file extension for media type detection
+                String extension = "";
+                int dotIndex = originalFilename.lastIndexOf('.');
+                if (dotIndex > 0) {
+                    extension = originalFilename.substring(dotIndex);
+                }
+
+                AlertMedia.MediaType mediaType = determineMediaType(file.getContentType(), extension);
+                System.out.println("Determined mediaType: " + mediaType + " for mimeType: " + file.getContentType() + ", extension: " + extension);
+                if (mediaType == null) {
+                    System.out.println("  -> Skipping file - unsupported media type");
+                    continue;
+                }
+
+                String storageKey;
                 try {
                     // Upload file to Supabase and get the storage key
-                    String storageKey = supabaseStorageService.uploadFile(file, originalFilename);
-
-                    // Determine file extension for media type detection
-                    String extension = "";
-                    int dotIndex = originalFilename.lastIndexOf('.');
-                    if (dotIndex > 0) {
-                        extension = originalFilename.substring(dotIndex);
-                    }
-
-                    AlertMedia.MediaType mediaType = determineMediaType(file.getContentType(), extension);
-                    if (mediaType == null) continue; // Skip unsupported files
-
-                    // Create media record with storage key from Supabase
-                    AlertMedia media = new AlertMedia();
-                    media.setAlert(savedAlert);
-                    media.setUploadedBy(reporter);
-                    media.setMediaType(mediaType);
-                    media.setMimeType(file.getContentType());
-                    media.setStorageKey(storageKey);
-                    media.setOriginalFilename(originalFilename);
-                    media.setFileSizeBytes(file.getSize());
-
-                    mediaList.add(media);
+                    storageKey = supabaseStorageService.uploadFile(file, originalFilename);
+                    System.out.println("Uploaded to Supabase with storageKey: " + storageKey);
                 } catch (Exception e) {
-                    System.err.println("Failed to upload file " + originalFilename + ": " + e.getMessage());
+                    String errorMessage = "Failed to upload file to Supabase " + originalFilename + ": " + e.getMessage();
+                    System.err.println(errorMessage);
                     e.printStackTrace();
-                    // Continue processing other files
+                    throw new RuntimeException(errorMessage, e);
                 }
+
+                AlertMedia media = new AlertMedia();
+                media.setAlert(savedAlert);
+                media.setUploadedBy(reporter);
+                media.setMediaType(mediaType);
+                media.setMimeType(file.getContentType());
+                media.setStorageKey(storageKey);
+                media.setOriginalFilename(originalFilename);
+                media.setFileSizeBytes(file.getSize());
+
+                mediaList.add(media);
+                System.out.println("Added media to list. Total media items: " + mediaList.size());
             }
 
+            System.out.println("Final mediaList size before save: " + mediaList.size());
             if (!mediaList.isEmpty()) {
                 alertMediaRepository.saveAll(mediaList);
+                System.out.println("Saved " + mediaList.size() + " media items to database");
+            } else {
+                System.out.println("No valid media items to save");
             }
+        } else {
+            System.out.println("No files to process");
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
             "message", "Alert reported successfully.",
-            "id", savedAlert.getId().toString()
+            "id", savedAlert.getId().toString(),
+            "mediaCount", mediaList != null ? mediaList.size() : 0
         ));
     }
 
@@ -320,6 +360,7 @@ public class AlertController {
         }
 
         alertStatusHistoryRepository.save(history);
+        alertStatusWebSocketHandler.broadcastStatusUpdate(new AlertStatusUpdateMessage(alertId, newStatus.name(), savedAlert.getTitle(), java.time.Instant.now().toString()));
 
         return ResponseEntity.ok(Map.of("message", "Alert status updated successfully"));
     }
@@ -501,6 +542,11 @@ public class AlertController {
         response.setCategory(alert.getCategory());
         response.setPriority(alert.getPriority().name());
         response.setStatus(alert.getStatus().name());
+        String alertTitle = alert.getTitle();
+        if (alertTitle == null || alertTitle.isBlank()) {
+            alertTitle = deriveTitleFromDescription(alert.getDescription());
+        }
+        response.setTitle(alertTitle);
         response.setDescription(alert.getDescription());
         response.setLocationText(alert.getLocationText());
         response.setLatitude(alert.getLatitude());
@@ -563,6 +609,15 @@ public class AlertController {
         }
 
         return response;
+    }
+
+    private String deriveTitleFromDescription(String description) {
+        if (description == null || description.isBlank()) {
+            return null;
+        }
+        String[] lines = description.split("\\R", 2);
+        String firstLine = lines[0].trim();
+        return firstLine.isEmpty() ? null : firstLine;
     }
 
     private String extractPrincipalName(Authentication authentication) {
