@@ -7,6 +7,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import jakarta.servlet.ServletException;
@@ -16,6 +18,7 @@ import java.io.IOException;
 
 @Component
 public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccessHandler {
+    private static final Logger log = LoggerFactory.getLogger(OAuth2AuthenticationSuccessHandler.class);
 
     private final AuthService authService;
     private final String successRedirectUrl;
@@ -26,6 +29,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     ) {
         this.authService = authService;
         this.successRedirectUrl = successRedirectUrl;
+        log.info("Configured OAuth successRedirectUrl={}", successRedirectUrl);
     }
 
     @Override
@@ -53,7 +57,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
             .queryParam("expiresAt", authResponse.expiresAt())
             .build()
             .toUriString();
-
+        log.info("OAuth success redirect target={}", redirectTarget);
         response.sendRedirect(redirectTarget);
     }
 
