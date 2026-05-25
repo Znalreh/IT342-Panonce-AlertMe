@@ -28,8 +28,8 @@ public class SupabaseStorageService {
 
     public SupabaseStorageService(
             RestTemplate restTemplate,
-            @Value("${supabase.url}") String supabaseUrl,
-            @Value("${supabase.api-key}") String supabaseApiKey,
+            @Value("${supabase.url:}") String supabaseUrl,
+            @Value("${supabase.api-key:}") String supabaseApiKey,
             @Value("${supabase.service-role-key:}") String supabaseServiceRoleKey) {
         this.restTemplate = restTemplate;
         String normalizedUrl = normalizeString(supabaseUrl);
