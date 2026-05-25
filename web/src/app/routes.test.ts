@@ -69,23 +69,19 @@ describe('route loaders', () => {
     await expect(requireAdmin()).rejects.toBeInstanceOf(Response)
   })
 
-  it('redirects authenticated user to dashboard when accessToken is present and role is STUDENT', async () => {
-    mockedAuthApi.getCurrentUser.mockResolvedValue({ role: 'STUDENT' })
+  it('saves accessToken in the loader and lets the login page handle the redirect', async () => {
     const request = new Request('http://localhost/login?accessToken=token123')
 
     const response = await redirectAuthenticatedUser({ request })
-    expect(response).toBeInstanceOf(Response)
-    expect(response.headers.get('Location')).toBe('/dashboard')
+    expect(response).toBeNull()
     expect(mockedAuthApi.saveAuthToken).toHaveBeenCalledWith('token123')
   })
 
-  it('redirects to login when accessToken is invalid', async () => {
-    mockedAuthApi.getCurrentUser.mockRejectedValue(new Error('Invalid token'))
+  it('does not block login when accessToken is invalid in the loader', async () => {
     const request = new Request('http://localhost/login?accessToken=invalid')
 
     const response = await redirectAuthenticatedUser({ request })
-    expect(response).toBeInstanceOf(Response)
-    expect(response.headers.get('Location')).toBe('/login')
+    expect(response).toBeNull()
   })
 
   it('returns null when no accessToken is present and no auth token exists', async () => {

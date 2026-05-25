@@ -66,13 +66,7 @@ export async function redirectAuthenticatedUser({ request }: { request: Request 
 
   if (accessToken) {
     saveAuthToken(accessToken);
-
-    try {
-      const user = await getCurrentUser();
-      return redirect(user.role === "STUDENT" ? "/dashboard" : "/admin");
-    } catch (error) {
-      return redirect("/login");
-    }
+    return null;
   }
 
   if (!getAuthToken()) {
