@@ -33,5 +33,4 @@ build/
 .vscode/
 
 # Local environment/config values
-src/main/resources/application.properties
 .env
