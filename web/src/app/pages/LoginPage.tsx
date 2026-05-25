@@ -25,13 +25,15 @@ export function LoginPage() {
       }
 
       saveAuthToken(accessToken);
-      window.history.replaceState({}, "", "/login");
 
       try {
         const dashboardRoute = await getDashboardRoute();
+        // Remove token from URL and navigate to dashboard
+        window.history.replaceState({}, document.title, dashboardRoute);
         navigate(dashboardRoute, { replace: true });
       } catch (error) {
         console.error("OAuth callback redirect failed", error);
+        window.history.replaceState({}, document.title, "/dashboard");
         navigate("/dashboard", { replace: true });
       }
     }

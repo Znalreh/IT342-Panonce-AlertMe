@@ -14,6 +14,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import java.io.IOException;
 
 @Component
@@ -50,6 +52,23 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         }
 
         AuthResponse authResponse = authService.authenticateWithGoogle(email, firstName, lastName, googleSubject);
+
+        // Set HTTP-only cookie with the access token (best-effort, still include token in redirect for compatibility)
+        try {
+            long maxAgeSeconds = Math.max(0L, (authResponse.expiresAt() - System.currentTimeMillis()) / 1000);
+            ResponseCookie cookie = ResponseCookie.from("alertme_jwt", authResponse.accessToken())
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(maxAgeSeconds)
+                .sameSite("Lax")
+                .build();
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        } catch (Exception e) {
+            // Don't fail the flow if cookie creation isn't allowed; continue with redirect
+            // Log via System.err as logger may not be initialized here
+            System.err.println("Failed to set JWT cookie: " + e.getMessage());
+        }
 
         String redirectTarget = UriComponentsBuilder.fromUriString(successRedirectUrl)
             .queryParam("accessToken", authResponse.accessToken())
