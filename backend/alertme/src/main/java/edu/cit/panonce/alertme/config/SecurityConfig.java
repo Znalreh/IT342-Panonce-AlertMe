@@ -56,8 +56,6 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             );
 
-        http.oauth2Login(oauth2 -> oauth2.successHandler(oAuth2AuthenticationSuccessHandler));
-
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         if (googleOAuthEnabled) {
