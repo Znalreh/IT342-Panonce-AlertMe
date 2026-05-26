@@ -23,5 +23,3 @@ services:
     envVars:
       - key: APP_OAUTH2_SUCCESS_REDIRECT_URL
         value: https://alertme-hirn.onrender.com/login
-      - key: APP_OAUTH2_REDIRECT_URI
-        value: https://alertme-api-mxkp.onrender.com/login/oauth2/code/google

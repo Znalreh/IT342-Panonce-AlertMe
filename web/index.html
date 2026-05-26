@@ -25,10 +25,10 @@
             var expiresAt = params.get('expiresAt');
             if (expiresAt) localStorage.setItem('alertme_expires_at', expiresAt);
 
-            // Navigate to dashboard and remove token from URL
-            var dashboard = '/dashboard';
-            window.history.replaceState({}, document.title, dashboard);
-            window.location.replace(dashboard);
+            // Navigate to login (SPA will inspect token and route by role)
+            var landing = '/login';
+            window.history.replaceState({}, document.title, landing);
+            window.location.replace(landing);
           } catch (e) {
             // Fail silently and let the SPA handle it
             console.error('OAuth inline handler error', e);
