@@ -7,6 +7,7 @@ import { Badge } from "../components/ui/badge";
 import { Switch } from "../components/ui/switch";
 import { clearAuthToken, getCurrentUser, updateUserProfile, changeUserPassword } from "../api/auth";
 import type { UserProfile } from "../api/auth";
+import { fetchAlerts } from "../api/alerts";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -17,7 +18,6 @@ import {
   Bell,
   Eye,
   Lock,
-  Download,
   Trash2,
   Edit,
   Save,
@@ -33,12 +33,15 @@ export function ProfilePage() {
   const [email, setEmail] = useState("");
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [reportsSubmitted, setReportsSubmitted] = useState(0);
+  const [activeAlertsCount, setActiveAlertsCount] = useState(0);
+  const [resolvedAlertsCount, setResolvedAlertsCount] = useState(0);
   const navigate = useNavigate();
 
   function handleLogout() {
@@ -54,6 +57,15 @@ export function ProfilePage() {
         setFirstName(user.firstName);
         setLastName(user.lastName);
         setEmail(user.email);
+
+        const alerts = await fetchAlerts();
+        const myAlerts = alerts.filter(
+          (alert) => alert.reporterEmail?.toLowerCase() === user.email.toLowerCase()
+        );
+
+        setReportsSubmitted(myAlerts.length);
+        setActiveAlertsCount(myAlerts.filter((alert) => alert.status !== "RESOLVED").length);
+        setResolvedAlertsCount(myAlerts.filter((alert) => alert.status === "RESOLVED").length);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unable to load profile.");
       } finally {
@@ -157,15 +169,15 @@ export function ProfilePage() {
         {/* Account Stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           <Card className="p-4 border-2 border-gray-200 shadow-md text-center">
-            <p className="text-2xl font-bold text-gray-900 mb-1">12</p>
+            <p className="text-2xl font-bold text-gray-900 mb-1">{reportsSubmitted}</p>
             <p className="text-sm text-gray-600">Reports Submitted</p>
           </Card>
           <Card className="p-4 border-2 border-gray-200 shadow-md text-center">
-            <p className="text-2xl font-bold text-gray-900 mb-1">8</p>
+            <p className="text-2xl font-bold text-gray-900 mb-1">{activeAlertsCount}</p>
             <p className="text-sm text-gray-600">Active Alerts</p>
           </Card>
           <Card className="p-4 border-2 border-gray-200 shadow-md text-center">
-            <p className="text-2xl font-bold text-gray-900 mb-1">4</p>
+            <p className="text-2xl font-bold text-gray-900 mb-1">{resolvedAlertsCount}</p>
             <p className="text-sm text-gray-600">Resolved</p>
           </Card>
         </div>

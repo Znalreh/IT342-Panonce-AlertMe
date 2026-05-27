@@ -10,7 +10,7 @@
     <body>
       <div id="root"></div>
 
-      <!-- Inline OAuth callback handler: stores accessToken from query and redirects -->
+      <!-- Inline OAuth callback handler: stores accessToken from query and navigates -->
       <script>
         (function() {
           try {
@@ -25,10 +25,8 @@
             var expiresAt = params.get('expiresAt');
             if (expiresAt) localStorage.setItem('alertme_expires_at', expiresAt);
 
-            // Navigate to login (SPA will inspect token and route by role)
-            var landing = '/login';
-            window.history.replaceState({}, document.title, landing);
-            window.location.replace(landing);
+            // Redirect to current path without query params to trigger React Router loaders
+            window.location.href = window.location.origin + window.location.pathname;
           } catch (e) {
             // Fail silently and let the SPA handle it
             console.error('OAuth inline handler error', e);
