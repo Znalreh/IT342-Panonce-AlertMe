@@ -210,6 +210,14 @@ public class AlertController {
             System.out.println("No files to process");
         }
 
+        alertStatusWebSocketHandler.broadcastStatusUpdate(new AlertStatusUpdateMessage(
+            savedAlert.getId().toString(),
+            savedAlert.getStatus().name(),
+            savedAlert.getTitle(),
+            java.time.Instant.now().toString(),
+            "ALERT_CREATED"
+        ));
+
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
             "message", "Alert reported successfully.",
             "id", savedAlert.getId().toString(),
@@ -361,7 +369,7 @@ public class AlertController {
         }
 
         alertStatusHistoryRepository.save(history);
-        alertStatusWebSocketHandler.broadcastStatusUpdate(new AlertStatusUpdateMessage(alertId, newStatus.name(), savedAlert.getTitle(), java.time.Instant.now().toString()));
+        alertStatusWebSocketHandler.broadcastStatusUpdate(new AlertStatusUpdateMessage(alertId, newStatus.name(), savedAlert.getTitle(), java.time.Instant.now().toString(), "STATUS_UPDATED"));
 
         return ResponseEntity.ok(Map.of("message", "Alert status updated successfully"));
     }
@@ -468,6 +476,7 @@ public class AlertController {
         alertMediaRepository.deleteAll(alert.getMediaAttachments());
         alertStatusHistoryRepository.deleteAll(alert.getStatusHistory());
         alertRepository.delete(alert);
+        alertStatusWebSocketHandler.broadcastStatusUpdate(new AlertStatusUpdateMessage(alertId, "DELETED", alert.getTitle(), java.time.Instant.now().toString(), "ALERT_DELETED"));
 
         return ResponseEntity.ok(Map.of("message", "Alert deleted successfully"));
     }

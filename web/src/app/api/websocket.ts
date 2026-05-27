@@ -2,9 +2,10 @@ import type { AlertStatus } from "./alerts";
 
 export interface AlertStatusUpdate {
   alertId: string;
-  status: AlertStatus;
+  status: AlertStatus | "DELETED";
   alertTitle?: string;
   updatedAt?: string;
+  eventType?: string;
 }
 
 function getWebSocketUrl(endpoint: string) {
@@ -29,7 +30,7 @@ export function connectToAlertStatusUpdates(onUpdate: (update: AlertStatusUpdate
   ws.addEventListener("message", (event) => {
     try {
       const payload = JSON.parse(event.data) as AlertStatusUpdate;
-      if (payload?.alertId && payload?.status) {
+      if (payload?.alertId && (payload?.status || payload?.eventType === "ALERT_DELETED")) {
         onUpdate(payload);
       }
     } catch (error) {

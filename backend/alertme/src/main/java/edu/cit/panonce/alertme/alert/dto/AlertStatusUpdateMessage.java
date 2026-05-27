@@ -5,15 +5,21 @@ public class AlertStatusUpdateMessage {
     private String status;
     private String alertTitle;
     private String updatedAt;
+    private String eventType;
 
     public AlertStatusUpdateMessage() {
     }
 
     public AlertStatusUpdateMessage(String alertId, String status, String alertTitle, String updatedAt) {
+        this(alertId, status, alertTitle, updatedAt, "STATUS_UPDATED");
+    }
+
+    public AlertStatusUpdateMessage(String alertId, String status, String alertTitle, String updatedAt, String eventType) {
         this.alertId = alertId;
         this.status = status;
         this.alertTitle = alertTitle;
         this.updatedAt = updatedAt;
+        this.eventType = eventType;
     }
 
     public String getAlertId() {
@@ -46,5 +52,13 @@ public class AlertStatusUpdateMessage {
 
     public void setUpdatedAt(String updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getEventType() {
+        return eventType;
+    }
+
+    public void setEventType(String eventType) {
+        this.eventType = eventType;
     }
 }
