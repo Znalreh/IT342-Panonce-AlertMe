@@ -181,11 +181,9 @@ public class AlertController {
                     System.out.println("Uploaded to Supabase with storageKey: " + storageKey);
                 } catch (Exception e) {
                     String errorMessage = "Failed to upload file to Supabase " + originalFilename + ": " + e.getMessage();
-                    System.err.println(errorMessage);
+                    System.err.println("FILE UPLOAD ERROR: " + errorMessage);
                     e.printStackTrace();
-                    // Log error but don't crash - allow alert to be created without this file
-                    System.out.println("  -> Skipping file due to upload error; alert will be created without this attachment");
-                    continue;
+                    throw new IllegalStateException(errorMessage, e);
                 }
 
                 AlertMedia media = new AlertMedia();
