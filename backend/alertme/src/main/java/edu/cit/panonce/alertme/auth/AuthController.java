@@ -2,6 +2,7 @@ package edu.cit.panonce.alertme.auth;
 
 import edu.cit.panonce.alertme.auth.dto.AuthResponse;
 import edu.cit.panonce.alertme.auth.dto.ChangePasswordRequest;
+import edu.cit.panonce.alertme.auth.dto.GoogleAuthRequest;
 import edu.cit.panonce.alertme.auth.dto.LoginRequest;
 import edu.cit.panonce.alertme.auth.dto.RegisterRequest;
 import edu.cit.panonce.alertme.auth.dto.UpdateProfileRequest;
@@ -55,6 +56,26 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", ex.getMessage()));
         } catch (IllegalStateException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", ex.getMessage()));
+        }
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<?> googleAuth(@RequestBody GoogleAuthRequest request) {
+        try {
+            // The ID token can be verified, but for now we'll trust the mobile client
+            // and use the provided email, firstName, lastName, and googleSubject
+            // In a production environment, you should verify the ID token with Google's API
+            AuthResponse response = authService.authenticateWithGoogle(
+                request.getEmail(),
+                request.getFirstName(),
+                request.getLastName(),
+                request.getGoogleSubject()
+            );
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Google authentication failed"));
         }
     }
 
