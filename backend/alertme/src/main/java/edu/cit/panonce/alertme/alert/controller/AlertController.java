@@ -183,7 +183,9 @@ public class AlertController {
                     String errorMessage = "Failed to upload file to Supabase " + originalFilename + ": " + e.getMessage();
                     System.err.println(errorMessage);
                     e.printStackTrace();
-                    throw new RuntimeException(errorMessage, e);
+                    // Log error but don't crash - allow alert to be created without this file
+                    System.out.println("  -> Skipping file due to upload error; alert will be created without this attachment");
+                    continue;
                 }
 
                 AlertMedia media = new AlertMedia();
