@@ -8,7 +8,7 @@ import { AlertDetailPage } from "./pages/AlertDetailPage";
 import { AdminDashboardPage } from "./pages/AdminDashboardPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { BrowseAlertsPage } from "./pages/BrowseAlertsPage";
-import { getAuthToken, getCurrentUser, saveAuthToken } from "./api/auth";
+import { getAuthToken, getCurrentUser, saveAuthToken, getDashboardRoute } from "./api/auth";
 
 export function requireAuth() {
   if (!getAuthToken()) {
@@ -66,7 +66,13 @@ export async function redirectAuthenticatedUser({ request }: { request: Request 
 
   if (accessToken) {
     saveAuthToken(accessToken);
-    return null;
+
+    try {
+      const dashboardRoute = await getDashboardRoute();
+      return redirect(dashboardRoute);
+    } catch (error) {
+      return redirect("/dashboard");
+    }
   }
 
   if (!getAuthToken()) {

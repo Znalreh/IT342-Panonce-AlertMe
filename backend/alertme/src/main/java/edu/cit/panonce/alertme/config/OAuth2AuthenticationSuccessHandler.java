@@ -61,7 +61,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
                 .secure(true)
                 .path("/")
                 .maxAge(maxAgeSeconds)
-                .sameSite("Lax")
+                .sameSite("None")
                 .build();
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         } catch (Exception e) {
