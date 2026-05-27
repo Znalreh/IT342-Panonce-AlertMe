@@ -125,7 +125,7 @@ function MediaThumbnail({ media, hasError, onError, onClick }: MediaThumbnailPro
         </div>
       ) : (
         <img
-          src={`${(import.meta.env.VITE_API_BASE_URL || "").trim()}/api/v1/media/${media.id}`}
+          src={`https://rjnshudkyinfhwyrxbmh.supabase.co/storage/v1/object/public/alerts/${media.storageKey}`}
           alt={media.originalFilename}
           className="w-full h-full object-cover"
           onError={onError}
@@ -484,7 +484,7 @@ export function AlertDetailPage() {
               <X className="w-6 h-6 text-gray-700" />
             </button>
             <img
-              src={`${(import.meta.env.VITE_API_BASE_URL || "").trim()}/api/v1/media/${selectedMedia.id}`}
+              src={`https://rjnshudkyinfhwyrxbmh.supabase.co/storage/v1/object/public/alerts/${selectedMedia.storageKey}`}
               alt={selectedMedia.originalFilename}
               className="w-full h-full object-contain"
             />
