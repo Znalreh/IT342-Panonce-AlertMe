@@ -114,7 +114,7 @@ public class SupabaseStorageService {
             // Upload to Supabase
             ResponseEntity<String> response = restTemplate.exchange(
                 uploadUrl,
-                HttpMethod.POST,
+                HttpMethod.PUT,
                 request,
                 String.class
             );
@@ -124,7 +124,11 @@ public class SupabaseStorageService {
 
             if (!response.getStatusCode().is2xxSuccessful()) {
                 String errorMsg = "Failed to upload file to Supabase: HTTP " + response.getStatusCode() + " - " + response.getBody();
-                System.err.println(errorMsg);
+                System.err.println("ERROR: " + errorMsg);
+                System.err.println("Upload URL: " + uploadUrl);
+                System.err.println("Bucket: " + bucketName);
+                System.err.println("Storage Key: " + storageKey);
+                System.err.println("Content-Type: " + contentType);
                 throw new RuntimeException(errorMsg);
             }
 
