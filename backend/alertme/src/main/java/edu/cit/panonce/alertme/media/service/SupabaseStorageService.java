@@ -114,7 +114,7 @@ public class SupabaseStorageService {
             // Upload to Supabase
             ResponseEntity<String> response = restTemplate.exchange(
                 uploadUrl,
-                HttpMethod.PUT,
+                HttpMethod.POST,
                 request,
                 String.class
             );
