@@ -11,17 +11,21 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:orientation="horizontal"
-        android:padding="16dp"
+        android:padding="10dp"
         android:gravity="center_vertical"
         android:background="@color/navy_blue">
 
-        <ImageView
-            android:id="@+id/backButton"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_alert_triangle"
-            android:contentDescription="Back"
-            android:tint="@color/white" />
+        <FrameLayout
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/logo_background">
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_alert_triangle"
+                android:contentDescription="@string/app_name" />
+        </FrameLayout>
 
         <TextView
             android:layout_width="0dp"
@@ -38,7 +42,8 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -78,6 +83,17 @@
                         android:paddingStart="16dp"
                         android:paddingEnd="16dp"
                         android:textSize="14sp"
+                        android:imeOptions="actionSearch"
+                        android:inputType="text"
+                        android:layout_marginBottom="8dp"
+                        android:importantForAutofill="no" />
+
+                    <Button
+                        android:id="@+id/searchButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:text="Search"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                         android:layout_marginBottom="12dp" />
 
                     <!-- Status Filter -->
@@ -88,7 +104,8 @@
                         android:background="@drawable/rounded_spinner"
                         android:paddingStart="16dp"
                         android:paddingEnd="16dp"
-                        android:layout_marginBottom="12dp" />
+                        android:layout_marginBottom="12dp"
+                        android:contentDescription="Status Filter" />
 
                     <!-- Category Filter -->
                     <Spinner
@@ -98,7 +115,8 @@
                         android:background="@drawable/rounded_spinner"
                         android:paddingStart="16dp"
                         android:paddingEnd="16dp"
-                        android:layout_marginBottom="12dp" />
+                        android:layout_marginBottom="12dp"
+                        android:contentDescription="Category Filter" />
 
                     <!-- Priority Filter -->
                     <Spinner
@@ -108,58 +126,82 @@
                         android:background="@drawable/rounded_spinner"
                         android:paddingStart="16dp"
                         android:paddingEnd="16dp"
-                        android:layout_marginBottom="12dp" />
-
-                    <!-- Date Range Filter -->
-                    <Spinner
-                        android:id="@+id/dateRangeFilter"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:background="@drawable/rounded_spinner"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="16dp" />
+                        android:layout_marginBottom="12dp"
+                        android:contentDescription="Priority Filter" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Quick Filters -->
-            <LinearLayout
+            <!-- Quick Filters and Category Buttons -->
+            <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="16dp"
-                android:gravity="center_vertical">
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:layout_marginBottom="8dp"
+                android:fillViewport="true"
+                android:overScrollMode="never">
 
-                <Button
-                    android:id="@+id/filterAll"
+                <LinearLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:text="All"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_marginEnd="8dp" />
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
 
-                <Button
-                    android:id="@+id/filterHighPriority"
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:text="High Priority"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_marginEnd="8dp" />
+                    <Button
+                        android:id="@+id/filterAll"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:text="All"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_marginEnd="8dp" />
 
-                <Button
-                    android:id="@+id/filterNew"
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:text="New"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_marginEnd="8dp" />
+                    <Button
+                        android:id="@+id/filterHighPriority"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:text="High Priority"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_marginEnd="8dp" />
 
-                <Button
-                    android:id="@+id/filterResolved"
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:text="Resolved"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
-            </LinearLayout>
+                    <Button
+                        android:id="@+id/filterNew"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:text="New"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_marginEnd="8dp" />
+
+                    <Button
+                        android:id="@+id/filterResolved"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:text="Resolved"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_marginEnd="8dp" />
+
+                    <Button
+                        android:id="@+id/filterSecurity"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:text="Security"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_marginEnd="8dp" />
+
+                    <Button
+                        android:id="@+id/filterInfrastructure"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:text="Infrastructure"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_marginEnd="8dp" />
+
+                    <Button
+                        android:id="@+id/filterEnvironmental"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:text="Environmental"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+                </LinearLayout>
+            </HorizontalScrollView>
 
             <!-- Alerts List -->
             <LinearLayout
@@ -172,234 +214,17 @@
                     android:id="@+id/alertsCount"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Showing 15 alerts"
+                    android:text="Showing 0 alerts"
                     android:textSize="14sp"
                     android:textColor="@color/gray_600"
                     android:layout_marginBottom="12dp" />
 
-                <!-- Alert Item 1 -->
-                <androidx.cardview.widget.CardView
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvBrowseAlerts"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="2dp"
-                    android:layout_marginBottom="8dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="12dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical">
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Broken Glass in Hallway"
-                                android:textSize="14sp"
-                                android:textStyle="bold"
-                                android:textColor="@color/navy_blue" />
-
-                            <com.google.android.material.chip.Chip
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Security"
-                                android:textSize="12sp"
-                                app:chipBackgroundColor="@color/chip_bg" />
-                        </LinearLayout>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Library South Wing"
-                            android:textSize="12sp"
-                            android:textColor="@color/gray_600"
-                            android:layout_marginTop="4dp" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:layout_marginTop="8dp">
-
-                            <com.google.android.material.chip.Chip
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="High"
-                                app:chipBackgroundColor="@color/status_yellow"
-                                android:layout_marginEnd="4dp" />
-
-                            <com.google.android.material.chip.Chip
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="New"
-                                app:chipBackgroundColor="@color/status_blue" />
-                        </LinearLayout>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Reported 2 hours ago"
-                            android:textSize="11sp"
-                            android:textColor="@color/gray_500"
-                            android:layout_marginTop="8dp" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- Alert Item 2 -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="2dp"
-                    android:layout_marginBottom="8dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="12dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical">
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Parking Lot Pothole"
-                                android:textSize="14sp"
-                                android:textStyle="bold"
-                                android:textColor="@color/navy_blue" />
-
-                            <com.google.android.material.chip.Chip
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Infrastructure"
-                                android:textSize="12sp"
-                                app:chipBackgroundColor="@color/chip_bg" />
-                        </LinearLayout>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Lot C"
-                            android:textSize="12sp"
-                            android:textColor="@color/gray_600"
-                            android:layout_marginTop="4dp" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:layout_marginTop="8dp">
-
-                            <com.google.android.material.chip.Chip
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Medium"
-                                app:chipBackgroundColor="@color/status_yellow"
-                                android:layout_marginEnd="4dp" />
-
-                            <com.google.android.material.chip.Chip
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="In Progress"
-                                app:chipBackgroundColor="@color/status_yellow" />
-                        </LinearLayout>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Reported 1 day ago"
-                            android:textSize="11sp"
-                            android:textColor="@color/gray_500"
-                            android:layout_marginTop="8dp" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- Alert Item 3 -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="2dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="12dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical">
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Fallen Tree Branch"
-                                android:textSize="14sp"
-                                android:textStyle="bold"
-                                android:textColor="@color/navy_blue" />
-
-                            <com.google.android.material.chip.Chip
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Environmental"
-                                android:textSize="12sp"
-                                app:chipBackgroundColor="@color/chip_bg" />
-                        </LinearLayout>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Quad Area"
-                            android:textSize="12sp"
-                            android:textColor="@color/gray_600"
-                            android:layout_marginTop="4dp" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:layout_marginTop="8dp">
-
-                            <com.google.android.material.chip.Chip
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="High"
-                                app:chipBackgroundColor="@color/status_red"
-                                android:layout_marginEnd="4dp" />
-
-                            <com.google.android.material.chip.Chip
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Resolved"
-                                app:chipBackgroundColor="@color/status_green" />
-                        </LinearLayout>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Resolved 3 hours ago"
-                            android:textSize="11sp"
-                            android:textColor="@color/gray_500"
-                            android:layout_marginTop="8dp" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
+                    android:nestedScrollingEnabled="false"
+                    android:overScrollMode="never" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

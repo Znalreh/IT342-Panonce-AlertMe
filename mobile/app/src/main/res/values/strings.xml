@@ -38,10 +38,43 @@
     <string name="already_account">Already have an account?</string>
     <string name="sign_in_link">Sign in here</string>
 
+    <!-- Alert Details -->
+    <string name="alert_details_title">Alert Details</string>
+    <string name="alert_id_label">Alert ID: %1$s</string>
+    <string name="status_investigating">Status: Investigating</string>
+    <string name="updated_ago">Updated %1$s ago</string>
+    <string name="in_progress">In Progress</string>
+    <string name="infrastructure">Infrastructure</string>
+    <string name="medium_priority">Medium Priority</string>
+    <string name="reported">Reported</string>
+    <string name="reported_by">Reported By</string>
+    <string name="assigned_to">Assigned To</string>
+    <string name="description">Description</string>
+    <string name="attachments">Attachments</string>
+    <string name="status_timeline">Status Timeline</string>
+    <string name="updates_comments">Updates &amp; Comments</string>
+    <string name="comments_count">Comments (%1$d)</string>
+    <string name="add_a_comment">Add a comment</string>
+    <string name="post_comment">Post Comment</string>
+    <string name="comment_hint">Ask questions or provide additional information&#8230;</string>
+    <string name="received">Received</string>
+    <string name="investigating">Investigating</string>
+    <string name="resolved">Resolved</string>
+    <string name="pending_completion">Pending completion</string>
+
     <!-- Content Descriptions -->
+    <string name="back">Back</string>
+    <string name="share">Share</string>
+    <string name="flag">Flag</string>
+    <string name="status_icon">Status Icon</string>
+    <string name="attachment_icon">Attachment Icon</string>
     <string name="category_icon">Category Icon</string>
     <string name="location">Location</string>
     <string name="time">Time</string>
+    <string name="person_icon">Person Icon</string>
+    <string name="check_icon">Check Icon</string>
+    <string name="camera_icon">Camera Icon</string>
+    <string name="message_icon">Message Icon</string>
 
     <!-- Footer -->
     <string name="copyright">© 2026 AlertMe Platform</string>

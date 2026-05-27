@@ -140,83 +140,50 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
 
-                        <!-- Security Option -->
-                        <androidx.cardview.widget.CardView
+                        <RadioButton
+                            android:id="@+id/rbSecurity"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="8dp"
-                            app:cardCornerRadius="8dp"
-                            app:cardElevation="0dp"
-                            app:strokeColor="@color/gray_200"
-                            app:strokeWidth="2dp"
-                            app:cardBackgroundColor="@color/white">
+                            android:padding="16dp"
+                            android:background="@drawable/rounded_spinner"
+                            android:buttonTint="@color/navy_blue"
+                            android:drawableStart="@drawable/ic_shield"
+                            android:drawablePadding="12dp"
+                            android:drawableTint="@color/navy_blue"
+                            android:text="Security"
+                            android:textColor="@color/navy_blue"
+                            android:textSize="14sp" />
 
-                            <RadioButton
-                                android:id="@+id/rbSecurity"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Security"
-                                android:textSize="14sp"
-                                android:textColor="@color/navy_blue"
-                                android:padding="16dp"
-                                android:drawableStart="@drawable/ic_shield"
-                                android:drawablePadding="12dp"
-                                android:drawableTint="@color/navy_blue"
-                                android:buttonTint="@color/navy_blue" />
-
-                        </androidx.cardview.widget.CardView>
-
-                        <!-- Infrastructure Option -->
-                        <androidx.cardview.widget.CardView
+                        <RadioButton
+                            android:id="@+id/rbInfrastructure"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="8dp"
-                            app:cardCornerRadius="8dp"
-                            app:cardElevation="0dp"
-                            app:strokeColor="@color/navy_blue"
-                            app:strokeWidth="2dp"
-                            app:cardBackgroundColor="@color/navy_blue_10">
+                            android:padding="16dp"
+                            android:background="@drawable/rounded_spinner"
+                            android:buttonTint="@color/navy_blue"
+                            android:drawableStart="@drawable/ic_build"
+                            android:drawablePadding="12dp"
+                            android:drawableTint="@color/navy_blue"
+                            android:text="Infrastructure"
+                            android:textColor="@color/navy_blue"
+                            android:textSize="14sp"
+                            android:checked="true" />
 
-                            <RadioButton
-                                android:id="@+id/rbInfrastructure"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Infrastructure"
-                                android:textSize="14sp"
-                                android:textColor="@color/navy_blue"
-                                android:padding="16dp"
-                                android:drawableStart="@drawable/ic_build"
-                                android:drawablePadding="12dp"
-                                android:drawableTint="@color/navy_blue"
-                                android:buttonTint="@color/navy_blue"
-                                android:checked="true" />
-
-                        </androidx.cardview.widget.CardView>
-
-                        <!-- Environmental Option -->
-                        <androidx.cardview.widget.CardView
+                        <RadioButton
+                            android:id="@+id/rbEnvironmental"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            app:cardCornerRadius="8dp"
-                            app:cardElevation="0dp"
-                            app:strokeColor="@color/gray_200"
-                            app:strokeWidth="2dp"
-                            app:cardBackgroundColor="@color/white">
-
-                            <RadioButton
-                                android:id="@+id/rbEnvironmental"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Environmental"
-                                android:textSize="14sp"
-                                android:textColor="@color/navy_blue"
-                                android:padding="16dp"
-                                android:drawableStart="@drawable/ic_eco"
-                                android:drawablePadding="12dp"
-                                android:drawableTint="@color/navy_blue"
-                                android:buttonTint="@color/navy_blue" />
-
-                        </androidx.cardview.widget.CardView>
+                            android:padding="16dp"
+                            android:background="@drawable/rounded_spinner"
+                            android:buttonTint="@color/navy_blue"
+                            android:drawableStart="@drawable/ic_eco"
+                            android:drawablePadding="12dp"
+                            android:drawableTint="@color/navy_blue"
+                            android:text="Environmental"
+                            android:textColor="@color/navy_blue"
+                            android:textSize="14sp" />
 
                     </RadioGroup>
 

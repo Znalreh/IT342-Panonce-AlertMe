@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:layout_marginTop="50dp"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/gray_50"
@@ -45,10 +46,9 @@
 
                         <ImageView
                             android:layout_width="24dp"
-                            android:layout_height="24dp"
+                            android:layout_height="wrap_content"
                             android:layout_gravity="center"
-                            android:src="@drawable/ic_alert_triangle"
-                             />
+                            android:src="@drawable/ic_alert_triangle" />
 
                     </FrameLayout>
 
@@ -185,7 +185,7 @@
                                 android:id="@+id/tvTotalAlerts"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="127"
+                                android:text=" "
                                 android:textSize="28sp"
                                 android:textStyle="bold"
                                 android:textColor="@color/navy_blue"
@@ -237,7 +237,7 @@
                                 android:id="@+id/tvActiveAlerts"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="23"
+                                android:text=" "
                                 android:textSize="28sp"
                                 android:textStyle="bold"
                                 android:textColor="@color/status_yellow_dark"
@@ -297,7 +297,7 @@
                                 android:id="@+id/tvResolvedAlerts"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="98"
+                                android:text=" "
                                 android:textSize="28sp"
                                 android:textStyle="bold"
                                 android:textColor="@color/status_green_dark"
@@ -350,7 +350,7 @@
                                 android:id="@+id/tvHighPriorityAlerts"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="6"
+                                android:text=" "
                                 android:textSize="28sp"
                                 android:textStyle="bold"
                                 android:textColor="@color/alert_red"
@@ -364,87 +364,6 @@
                 </LinearLayout>
 
             </LinearLayout>
-
-            <!-- Search and Action Buttons Section -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingHorizontal="16dp">
-
-                <!-- Search Bar -->
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:startIconDrawable="@drawable/ic_search"
-                    android:hint="      Search"
-                    app:startIconTint="@color/gray_500"
-                    app:boxStrokeColor="@color/navy_blue"
-                    app:boxStrokeWidth="2dp"
-                    app:hintTextColor="@color/navy_blue"
-                    app:boxCornerRadiusTopStart="8dp"
-                    app:boxCornerRadiusTopEnd="8dp"
-                    app:boxCornerRadiusBottomStart="8dp"
-                    app:boxCornerRadiusBottomEnd="8dp"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etSearch"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="text"
-                        android:textColor="@color/gray_900"
-                        android:textColorHint="@color/gray_500"
-                        android:maxLines="1" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <!-- Action Buttons -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="12dp">
-
-                    <!-- Filter Button -->
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnFilter"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="56dp"
-                        android:layout_weight="1"
-                        android:text="Filter"
-                        android:textColor="@color/navy_blue"
-                        android:textAllCaps="false"
-                        android:letterSpacing="0"
-                        app:icon="@drawable/ic_filter"
-                        app:iconTint="@color/navy_blue"
-                        app:iconGravity="textStart"
-                        app:strokeColor="@color/navy_blue"
-                        app:strokeWidth="2dp"
-                        app:cornerRadius="8dp"
-                        android:layout_marginEnd="8dp" />
-
-                    <!-- Report Alert Button -->
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnReportAlert"
-                        android:layout_width="0dp"
-                        android:layout_height="56dp"
-                        android:layout_weight="1"
-                        android:text="Report Alert"
-                        android:textColor="@color/white"
-                        android:textAllCaps="false"
-                        android:letterSpacing="0"
-                        android:backgroundTint="@color/alert_red"
-                        app:icon="@drawable/ic_add"
-                        app:iconTint="@color/white"
-                        app:iconGravity="textStart"
-                        app:cornerRadius="8dp" />
-
-                </LinearLayout>
-
-            </LinearLayout>
-
 
 
             <!-- Recent Alerts Section -->
