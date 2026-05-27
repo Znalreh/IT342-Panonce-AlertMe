@@ -39,6 +39,7 @@ import {
   fetchAlertsForAdmin,
   updateAlertStatus,
   assignAlert,
+  deleteAlert,
   type AdminStats,
   type AlertData,
   type AlertStatus,
@@ -53,6 +54,7 @@ export function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [deletingAlertId, setDeletingAlertId] = useState<string | null>(null);
   const [filters, setFilters] = useState<AdminAlertsFilters>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTab, setSelectedTab] = useState("all");
@@ -182,6 +184,29 @@ export function AdminDashboardPage() {
 
   const handleSearch = () => {
     loadAlerts();
+  };
+
+  const handleDeleteAlert = async (alertId: string) => {
+    const confirmed = window.confirm(
+      "Delete this alert? This action cannot be undone."
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingAlertId(alertId);
+      await deleteAlert(alertId);
+      setAlerts((prev) => prev.filter((alert) => alert.id !== alertId));
+      await loadData();
+      await loadAlerts();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to delete alert.";
+      console.error("Failed to delete alert:", error);
+      setError(message);
+    } finally {
+      setDeletingAlertId(null);
+    }
   };
 
   const handleFilterChange = (key: keyof AdminAlertsFilters, value: string) => {
@@ -513,7 +538,13 @@ export function AdminDashboardPage() {
                                     <Edit className="w-3 h-3" />
                                   </Button>
                                 </Link>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-red-600 hover:text-red-700">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-red-600 hover:text-red-700"
+                                  onClick={() => handleDeleteAlert(alert.id)}
+                                  disabled={deletingAlertId === alert.id}
+                                >
                                   <Trash2 className="w-3 h-3" />
                                 </Button>
                                 <Button variant="ghost" size="icon" className="h-7 w-7">
@@ -633,7 +664,13 @@ export function AdminDashboardPage() {
                                     <Edit className="w-3 h-3" />
                                   </Button>
                                 </Link>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-red-600 hover:text-red-700">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-red-600 hover:text-red-700"
+                                  onClick={() => handleDeleteAlert(alert.id)}
+                                  disabled={deletingAlertId === alert.id}
+                                >
                                   <Trash2 className="w-3 h-3" />
                                 </Button>
                                 <Button variant="ghost" size="icon" className="h-7 w-7">
@@ -736,7 +773,13 @@ export function AdminDashboardPage() {
                                     <Edit className="w-3 h-3" />
                                   </Button>
                                 </Link>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-red-600 hover:text-red-700">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-red-600 hover:text-red-700"
+                                  onClick={() => handleDeleteAlert(alert.id)}
+                                  disabled={deletingAlertId === alert.id}
+                                >
                                   <Trash2 className="w-3 h-3" />
                                 </Button>
                                 <Button variant="ghost" size="icon" className="h-7 w-7">
@@ -839,7 +882,13 @@ export function AdminDashboardPage() {
                                     <Edit className="w-3 h-3" />
                                   </Button>
                                 </Link>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-red-600 hover:text-red-700">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-red-600 hover:text-red-700"
+                                  onClick={() => handleDeleteAlert(alert.id)}
+                                  disabled={deletingAlertId === alert.id}
+                                >
                                   <Trash2 className="w-3 h-3" />
                                 </Button>
                                 <Button variant="ghost" size="icon" className="h-7 w-7">

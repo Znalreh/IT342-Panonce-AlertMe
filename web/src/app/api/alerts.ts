@@ -263,3 +263,23 @@ export async function assignAlert(alertId: string, assignedToUserId?: string): P
     throw new Error(message);
   }
 }
+
+export async function deleteAlert(alertId: string): Promise<void> {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated.");
+  }
+
+  const response = await fetch(buildApiUrl(`/api/v1/alerts/${alertId}`), {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const responseBody = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = responseBody?.message ?? "Could not delete alert.";
+    throw new Error(message);
+  }
+}

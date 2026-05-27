@@ -22,6 +22,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -423,6 +424,52 @@ public class AlertController {
         alertRepository.save(alert);
 
         return ResponseEntity.ok(Map.of("message", "Alert assignment updated successfully"));
+    }
+
+    @DeleteMapping("/{alertId}")
+    @Transactional
+    public ResponseEntity<?> deleteAlert(
+            @PathVariable("alertId") String alertId,
+            Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized"));
+        }
+
+        String username = extractPrincipalName(authentication);
+        if (username == null || username.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized"));
+        }
+
+        User admin = userRepository.findByEmailIgnoreCase(username)
+            .or(() -> userRepository.findByGoogleSubject(username))
+            .orElse(null);
+
+        if (admin == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "User not found"));
+        }
+
+        // Check if user has admin privileges
+        if (admin.getRole() != User.UserRole.ADMIN && admin.getRole() != User.UserRole.SECURITY && admin.getRole() != User.UserRole.STAFF) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Insufficient privileges"));
+        }
+
+        Alert alert;
+        try {
+            UUID uuid = UUID.fromString(alertId);
+            alert = alertRepository.findById(uuid).orElse(null);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid alert ID"));
+        }
+
+        if (alert == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        alertMediaRepository.deleteAll(alert.getMediaAttachments());
+        alertStatusHistoryRepository.deleteAll(alert.getStatusHistory());
+        alertRepository.delete(alert);
+
+        return ResponseEntity.ok(Map.of("message", "Alert deleted successfully"));
     }
 
     @GetMapping("/admin/stats")
