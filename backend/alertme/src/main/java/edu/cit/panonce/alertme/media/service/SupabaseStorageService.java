@@ -24,6 +24,7 @@ public class SupabaseStorageService {
     private final String supabaseUrl;
     private final String supabaseApiKey;
     private final String supabaseServiceRoleKey;
+    private final boolean localUploadFallbackEnabled;
     private final String bucketName = "alerts";
     private final RestTemplate restTemplate;
 
@@ -31,7 +32,8 @@ public class SupabaseStorageService {
             RestTemplate restTemplate,
             @Value("${supabase.url:}") String supabaseUrl,
             @Value("${supabase.api-key:}") String supabaseApiKey,
-            @Value("${supabase.service-role-key:}") String supabaseServiceRoleKey) {
+            @Value("${supabase.service-role-key:}") String supabaseServiceRoleKey,
+            @Value("${app.storage.local-fallback:false}") boolean localUploadFallbackEnabled) {
         this.restTemplate = restTemplate;
         String normalizedUrl = normalizeString(supabaseUrl);
         if (normalizedUrl.endsWith("/")) {
@@ -40,6 +42,7 @@ public class SupabaseStorageService {
         this.supabaseUrl = normalizedUrl;
         this.supabaseApiKey = normalizeString(supabaseApiKey);
         this.supabaseServiceRoleKey = normalizeString(supabaseServiceRoleKey);
+        this.localUploadFallbackEnabled = localUploadFallbackEnabled;
     }
 
     private String normalizeString(String value) {
@@ -84,7 +87,10 @@ public class SupabaseStorageService {
         String bearerToken = !supabaseServiceRoleKey.isBlank() ? supabaseServiceRoleKey : supabaseApiKey;
         String apiKeyHeader = !supabaseServiceRoleKey.isBlank() ? supabaseServiceRoleKey : supabaseApiKey;
         if (bearerToken.isBlank()) {
-            throw new IllegalStateException("Supabase authentication key is not configured. Set supabase.api-key or supabase.service-role-key.");
+            if (localUploadFallbackEnabled) {
+                return saveLocally(file, storageKey);
+            }
+            throw new IllegalStateException("Supabase authentication key is not configured. Set SUPABASE_ANON_KEY or SUPABASE_SERVICE_ROLE_KEY in the deployment environment.");
         }
 
         MediaType contentType = MediaType.APPLICATION_OCTET_STREAM;
@@ -105,6 +111,9 @@ public class SupabaseStorageService {
 
         try {
             if (supabaseUrl.isBlank()) {
+                if (!localUploadFallbackEnabled) {
+                    throw new IllegalStateException("Supabase URL is not configured. Set SUPABASE_URL in the deployment environment.");
+                }
                 return saveLocally(file, storageKey);
             }
 
@@ -141,12 +150,18 @@ public class SupabaseStorageService {
             return storageKey;
         } catch (RestClientException | IOException e) {
             System.err.println("Supabase upload failed for " + originalFilename + ": " + e.getMessage());
-            return saveLocally(file, storageKey);
+            if (localUploadFallbackEnabled) {
+                return saveLocally(file, storageKey);
+            }
+            throw new RuntimeException("Supabase upload failed for " + originalFilename + ": " + e.getMessage(), e);
         } catch (Exception e) {
             String errorMessage = "Supabase upload failed for " + originalFilename + ": " + e.getMessage();
             System.err.println(errorMessage);
             e.printStackTrace();
-            return saveLocally(file, storageKey);
+            if (localUploadFallbackEnabled) {
+                return saveLocally(file, storageKey);
+            }
+            throw new RuntimeException(errorMessage, e);
         }
     }
 
