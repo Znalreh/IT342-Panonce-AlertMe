@@ -15,6 +15,8 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 @Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
@@ -23,15 +25,18 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final boolean googleOAuthEnabled;
+    private final boolean allowLocalhost;
 
     public SecurityConfig(
         JwtAuthenticationFilter jwtAuthenticationFilter,
         OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
-        @Value("${app.oauth2.google.enabled:false}") boolean googleOAuthEnabled
+        @Value("${app.oauth2.google.enabled:false}") boolean googleOAuthEnabled,
+        @Value("${app.allow-localhost:false}") boolean allowLocalhost
     ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
         this.googleOAuthEnabled = googleOAuthEnabled;
+        this.allowLocalhost = allowLocalhost;
     }
 
     @Bean
@@ -68,14 +73,18 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Allow localhost for development and Render-hosted frontend via wildcard pattern
-        configuration.setAllowedOriginPatterns(List.of(
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
-            "http://localhost:4173",
-            "http://127.0.0.1:4173",
-            "https://*.onrender.com"
-        ));
+        // Allow Render-hosted frontend by default. When running locally set
+        // the environment variable ALLOW_LOCALHOST=true to also allow localhost origins
+        List<String> origins = new ArrayList<>();
+        origins.add("https://*.onrender.com");
+        if (allowLocalhost) {
+            origins.addAll(Arrays.asList(
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+                "http://localhost:8080"
+            ));
+        }
+        configuration.setAllowedOriginPatterns(origins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

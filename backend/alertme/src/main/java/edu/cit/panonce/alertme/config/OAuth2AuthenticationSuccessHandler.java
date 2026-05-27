@@ -24,13 +24,16 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
     private final AuthService authService;
     private final String successRedirectUrl;
+    private final boolean allowLocalhost;
 
     public OAuth2AuthenticationSuccessHandler(
         AuthService authService,
-        @Value("${app.oauth2.success-redirect-url:http://localhost:5173/login}") String successRedirectUrl
+        @Value("${app.oauth2.success-redirect-url}") String successRedirectUrl,
+        @Value("${app.allow-localhost:false}") boolean allowLocalhost
     ) {
         this.authService = authService;
         this.successRedirectUrl = successRedirectUrl;
+        this.allowLocalhost = allowLocalhost;
         log.info("Configured OAuth successRedirectUrl={}", successRedirectUrl);
     }
 
@@ -70,7 +73,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
             System.err.println("Failed to set JWT cookie: " + e.getMessage());
         }
 
-        String redirectTarget = UriComponentsBuilder.fromUriString(successRedirectUrl)
+        String redirectTarget = UriComponentsBuilder.fromUriString(resolveSuccessRedirectUrl())
             .queryParam("accessToken", authResponse.accessToken())
             .queryParam("tokenType", authResponse.tokenType())
             .queryParam("expiresAt", authResponse.expiresAt())
@@ -78,6 +81,22 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
             .toUriString();
         log.info("OAuth success redirect target={}", redirectTarget);
         response.sendRedirect(redirectTarget);
+    }
+
+    private String resolveSuccessRedirectUrl() {
+        if (!successRedirectUrl.isBlank()) {
+            return successRedirectUrl;
+        }
+
+        if (allowLocalhost) {
+            log.warn("No OAuth2 success redirect URL configured; using localhost fallback for local testing.");
+            return "http://localhost:5173/login";
+        }
+
+        throw new IllegalStateException(
+            "Missing app.oauth2.success-redirect-url configuration. " +
+            "Set APP_OAUTH2_SUCCESS_REDIRECT_URL to your frontend login URL."
+        );
     }
 
     private String stringValue(Object value) {
