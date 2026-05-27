@@ -63,4 +63,48 @@ object RetrofitClient {
         retrofit = null
         apiService = null
     }
+
+    /**
+     * Return an ApiService instance that does not attach the AuthInterceptor.
+     * Useful for public endpoints where we want to avoid sending an Authorization header.
+     */
+    fun getUnauthenticatedApiService(context: Context): ApiService {
+        // Build a temporary retrofit instance without the AuthInterceptor
+        val httpClientBuilder = OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .addInterceptor { chain ->
+                val request = chain.request().newBuilder()
+                    .addHeader("Accept", "application/json")
+                    .build()
+                chain.proceed(request)
+            }
+
+        try {
+            if (com.example.alertme.BuildConfig.DEBUG) {
+                httpClientBuilder.addInterceptor(HttpLoggingInterceptor().apply {
+                    level = HttpLoggingInterceptor.Level.BODY
+                })
+            }
+        } catch (e: Exception) {
+            // ignore
+        }
+
+        val httpClient = httpClientBuilder.build()
+
+        val baseUrl = try {
+            com.example.alertme.BuildConfig.API_BASE_URL
+        } catch (e: Exception) {
+            "http://10.0.2.2:8080/"
+        }
+
+        val retrofitNoAuth = Retrofit.Builder()
+            .baseUrl(baseUrl)
+            .client(httpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        return retrofitNoAuth.create(ApiService::class.java)
+    }
 }

@@ -87,8 +87,16 @@ dependencies {
     // Google Sign-In
     implementation(libs.play.services.auth)
 
+    // Preferences
+    implementation(libs.androidx.preference)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    // Google Maps & Location
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+    // OpenStreetMap (osmdroid) for tile rendering without Google billing
+    implementation("org.osmdroid:osmdroid-android:6.1.14")
 }

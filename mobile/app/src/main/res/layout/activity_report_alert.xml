@@ -317,6 +317,25 @@
 
                     </LinearLayout>
 
+                    <!-- Complete Address Input -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Complete Address"
+                        app:boxStrokeColor="@color/navy_blue"
+                        app:hintTextColor="@color/navy_blue"
+                        android:layout_marginBottom="12dp"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etCompleteAddress"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPostalAddress"
+                            android:lines="2" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
                     <!-- Building/Area Input -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"

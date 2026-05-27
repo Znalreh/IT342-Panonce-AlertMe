@@ -10,12 +10,29 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.alertme.data.api.RetrofitClient
+import com.example.alertme.data.api.AlertWebSocketClient
 import com.example.alertme.data.models.Alert
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 class ViewAlertsActivity : AppCompatActivity() {
+
+    private val alertWsClient = AlertWebSocketClient()
+    private val wsListener: (AlertWebSocketClient.AlertStatusUpdate) -> Unit = { _ ->
+        runOnUiThread {
+            // rebuild the dynamic view by reloading alerts
+            val root = findViewById<ScrollView>(android.R.id.content).getChildAt(0) as? LinearLayout
+            // If we can't find container, just recreate activity
+            if (root == null) {
+                recreate()
+            } else {
+                root.removeAllViews()
+                // re-run onCreate's UI setup: simplest is to finish and restart
+                recreate()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,6 +72,24 @@ class ViewAlertsActivity : AppCompatActivity() {
         
         // Load alerts
         loadAlerts(containerLayout)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        try {
+            alertWsClient.addListener(wsListener)
+            alertWsClient.start(this)
+        } catch (_: Exception) {
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        try {
+            alertWsClient.removeListener(wsListener)
+            alertWsClient.stop()
+        } catch (_: Exception) {
+        }
     }
 
     private fun loadAlerts(container: LinearLayout) {

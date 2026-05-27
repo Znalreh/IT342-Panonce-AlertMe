@@ -1,0 +1,9 @@
+# Ignore local environment files
+*.env
+!*.env.production
+
+# Ignore VS Code workspace settings
+.vscode/
+
+# Ignore macOS files
+.DS_Store

@@ -9,6 +9,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.alertme.data.api.RetrofitClient
+import com.example.alertme.data.api.AlertWebSocketClient
 import com.example.alertme.data.models.Alert
 import com.example.alertme.data.preferences.TokenManager
 import com.google.android.material.button.MaterialButton
@@ -16,6 +17,11 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.launch
 
 class DashboardActivity : AppCompatActivity() {
+
+    private val alertWsClient = AlertWebSocketClient()
+    private val wsListener: (AlertWebSocketClient.AlertStatusUpdate) -> Unit = { _ ->
+        runOnUiThread { loadDashboardData() }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,6 +55,24 @@ class DashboardActivity : AppCompatActivity() {
 
         // Load dashboard data
         loadDashboardData()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        try {
+            alertWsClient.addListener(wsListener)
+            alertWsClient.start(this)
+        } catch (_: Exception) {
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        try {
+            alertWsClient.removeListener(wsListener)
+            alertWsClient.stop()
+        } catch (_: Exception) {
+        }
     }
 
     private fun loadDashboardData() {

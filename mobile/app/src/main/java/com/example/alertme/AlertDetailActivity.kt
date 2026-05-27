@@ -19,6 +19,7 @@ import com.example.alertme.data.models.User
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.button.MaterialButton
 import com.example.alertme.data.api.RetrofitClient
+import com.example.alertme.data.api.AlertWebSocketClient
 import kotlinx.coroutines.launch
 import java.time.Instant
 
@@ -38,6 +39,14 @@ class AlertDetailActivity : AppCompatActivity() {
     private lateinit var reportedByView: TextView
     private lateinit var assignedToView: TextView
     private lateinit var descriptionView: TextView
+    private var currentAlertId: String? = null
+    private val alertWsClient = AlertWebSocketClient()
+    private val wsListener: (AlertWebSocketClient.AlertStatusUpdate) -> Unit = { update ->
+        // If update is for current alert, reload details
+        if (update.alertId == currentAlertId) {
+            runOnUiThread { loadAlertDetails(update.alertId) }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,6 +74,25 @@ class AlertDetailActivity : AppCompatActivity() {
         }
 
         loadAlertDetails(alertId)
+        currentAlertId = alertId
+    }
+
+    override fun onResume() {
+        super.onResume()
+        try {
+            alertWsClient.addListener(wsListener)
+            alertWsClient.start(this)
+        } catch (_: Exception) {
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        try {
+            alertWsClient.removeListener(wsListener)
+            alertWsClient.stop()
+        } catch (_: Exception) {
+        }
     }
 
     private fun loadAlertDetails(alertId: String) {
@@ -74,7 +102,7 @@ class AlertDetailActivity : AppCompatActivity() {
                 val alert = try {
                     apiService.getAlert(alertId)
                 } catch (e: HttpException) {
-                    if (e.code() == 404) {
+                    if (e.code() == 404 || e.code() == 405) {
                         // Backend may not expose GET /{id} — fallback to fetching all and finding locally
                         val alerts = apiService.getAllAlerts()
                         alerts.find { it.id == alertId } ?: throw e
@@ -140,8 +168,18 @@ class AlertDetailActivity : AppCompatActivity() {
                     }
                 }
 
-                // Status timeline: populate timelineContainer from statusHistory
-                val timelineEntries = (alert.statusHistory ?: emptyList()).sortedBy { it.createdAt }
+                // Status timeline: populate timelineContainer from statusHistory, excluding comment-only entries
+                val timelineEntries = (alert.statusHistory ?: emptyList())
+                    .sortedBy { it.createdAt }
+                    .distinctBy { entry ->
+                        entry.toStatus?.trim().orEmpty().takeIf { it.isNotEmpty() }
+                            ?: entry.fromStatus?.trim().orEmpty()
+                    }
+                    .filter { entry ->
+                        val toStatus = entry.toStatus?.trim().orEmpty()
+                        val fromStatus = entry.fromStatus?.trim().orEmpty()
+                        toStatus.isNotEmpty() || fromStatus.isNotEmpty()
+                    }
                 val timelineContainer = findViewById<android.widget.LinearLayout>(R.id.timelineContainer)
                 timelineContainer.removeAllViews()
                 val inflater = layoutInflater
@@ -153,17 +191,12 @@ class AlertDetailActivity : AppCompatActivity() {
                     val titleText = when {
                         !entry.toStatus.isNullOrBlank() -> entry.toStatus
                         !entry.fromStatus.isNullOrBlank() -> entry.fromStatus
-                        !entry.comment.isNullOrBlank() -> "Comment"
                         else -> "Status"
                     }
                     tvTitle.text = titleText.replace('_', ' ').lowercase().replaceFirstChar { it.titlecase() }
                     tvTime.text = formatRelativeTime(entry.createdAt)
-                    if (!entry.comment.isNullOrBlank()) {
-                        tvComment.text = entry.comment
-                        tvComment.visibility = android.view.View.VISIBLE
-                    } else {
-                        tvComment.visibility = android.view.View.GONE
-                    }
+                    // Don't show comments in status timeline; they appear in the Comments section below
+                    tvComment.visibility = android.view.View.GONE
                     timelineContainer.addView(item)
                 }
 

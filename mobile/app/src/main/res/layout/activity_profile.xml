@@ -223,9 +223,10 @@
                             android:gravity="center">
 
                             <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="12"
+                            android:id="@+id/tvReportsCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
                                 android:textColor="#111827"
                                 android:textSize="28sp"
                                 android:textStyle="bold" />
@@ -252,9 +253,10 @@
                             android:gravity="center">
 
                             <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="8"
+                            android:id="@+id/tvActiveCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
                                 android:textColor="#111827"
                                 android:textSize="28sp"
                                 android:textStyle="bold" />
@@ -281,9 +283,10 @@
                             android:gravity="center">
 
                             <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="4"
+                            android:id="@+id/tvResolvedCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
                                 android:textColor="#111827"
                                 android:textSize="28sp"
                                 android:textStyle="bold" />
@@ -586,7 +589,8 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSaveChanges"
@@ -619,6 +623,19 @@
                     app:cornerRadius="12dp"
                     android:layout_marginStart="8dp" />
             </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnLogout"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Logout"
+                android:textColor="#DC2626"
+                android:textSize="16sp"
+                android:gravity="center"
+                app:strokeColor="#DC2626"
+                app:strokeWidth="2dp"
+                app:cornerRadius="12dp" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

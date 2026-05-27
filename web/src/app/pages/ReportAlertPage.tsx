@@ -195,7 +195,7 @@ export function ReportAlertPage() {
         const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
         return isValidType && isValidSize;
       });
-      setSelectedFiles(prev => [...prev, ...validFiles].slice(0, 10)); // Max 10 files
+      setSelectedFiles(validFiles.slice(0, 10));
     }
   };
 
@@ -268,7 +268,9 @@ export function ReportAlertPage() {
         fileInput.value = '';
       }
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not submit alert.");
+      console.error("Alert submission error:", error);
+      const errorMsg = error instanceof Error ? error.message : "Could not submit alert.";
+      setErrorMessage(errorMsg);
     } finally {
       setIsSubmitting(false);
     }

@@ -12,6 +12,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -76,7 +77,6 @@ public class SupabaseStorageService {
         }
         
         String storageKey = UUID.randomUUID().toString() + extension;
-        String localStorageKey = "local/" + storageKey;
 
         // Build upload URL for Supabase Storage API
         String uploadUrl = supabaseUrl + "/storage/v1/object/" + bucketName + "/" + storageKey;
@@ -104,6 +104,10 @@ public class SupabaseStorageService {
         headers.set("x-upsert", "true");
 
         try {
+            if (supabaseUrl.isBlank()) {
+                return saveLocally(file, storageKey);
+            }
+
             System.out.println("Uploading file to Supabase: " + uploadUrl);
             System.out.println("File size: " + file.getSize() + " bytes");
             System.out.println("Using bearer token type: " + (supabaseServiceRoleKey != null && !supabaseServiceRoleKey.isBlank() ? "service-role" : "anon"));
@@ -135,12 +139,28 @@ public class SupabaseStorageService {
             System.out.println("File uploaded successfully to Supabase: " + storageKey);
             // Return the storage key (what we'll store in the database)
             return storageKey;
+        } catch (RestClientException | IOException e) {
+            System.err.println("Supabase upload failed for " + originalFilename + ": " + e.getMessage());
+            return saveLocally(file, storageKey);
         } catch (Exception e) {
             String errorMessage = "Supabase upload failed for " + originalFilename + ": " + e.getMessage();
             System.err.println(errorMessage);
             e.printStackTrace();
-            throw new RuntimeException(errorMessage, e);
+            return saveLocally(file, storageKey);
         }
+    }
+
+    private String saveLocally(MultipartFile file, String storageKey) throws IOException {
+        Path localFile = Paths.get("uploads", "alerts", "local", storageKey);
+        Files.createDirectories(localFile.getParent());
+
+        try (InputStream inputStream = file.getInputStream()) {
+            Files.copy(inputStream, localFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        String localStorageKey = "local/" + storageKey;
+        System.out.println("Saved file locally: " + localFile.toAbsolutePath());
+        return localStorageKey;
     }
 
 }

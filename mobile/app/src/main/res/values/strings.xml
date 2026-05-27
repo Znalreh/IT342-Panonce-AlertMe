@@ -41,6 +41,8 @@
     <!-- Alert Details -->
     <string name="alert_details_title">Alert Details</string>
     <string name="alert_id_label">Alert ID: %1$s</string>
+    <string name="status_label">Status: %1$s</string>
+    <string name="photos_count">Photos (%1$d)</string>
     <string name="status_investigating">Status: Investigating</string>
     <string name="updated_ago">Updated %1$s ago</string>
     <string name="in_progress">In Progress</string>

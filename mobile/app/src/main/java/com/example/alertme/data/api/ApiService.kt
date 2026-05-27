@@ -9,6 +9,7 @@ import com.example.alertme.data.dto.LoginRequest
 import com.example.alertme.data.dto.GoogleAuthRequest
 import com.example.alertme.data.dto.RegisterRequest
 import com.example.alertme.data.dto.UpdateAlertStatusRequest
+import com.example.alertme.data.dto.ChangePasswordRequest
 import com.example.alertme.data.dto.UpdateProfileRequest
 import com.example.alertme.data.models.Alert
 import com.example.alertme.data.models.User
@@ -39,6 +40,9 @@ interface ApiService {
 
     @PUT("api/v1/auth/me")
     suspend fun updateProfile(@Body request: UpdateProfileRequest): User
+
+    @POST("api/v1/auth/me/change-password")
+    suspend fun changePassword(@Body request: ChangePasswordRequest): Map<String, String>
     
     // Alert endpoints
     @POST("/api/v1/alerts")

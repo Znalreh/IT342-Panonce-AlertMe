@@ -143,7 +143,8 @@ export async function createAlert(payload: CreateAlertPayload): Promise<CreateAl
 
   const responseBody = await response.json().catch(() => null);
   if (!response.ok) {
-    const message = responseBody?.message ?? "Could not submit alert.";
+    const message = responseBody?.message ?? `Server error: HTTP ${response.status}`;
+    console.error("Alert submission failed:", { status: response.status, message, body: responseBody });
     throw new Error(message);
   }
 

@@ -97,6 +97,11 @@ function formatCommentTime(timestamp: string) {
   });
 }
 
+function getMediaUrl(mediaId: string) {
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim() ?? "";
+  return `${apiBaseUrl}/api/v1/media/${mediaId}`;
+}
+
 interface MediaThumbnailProps {
   media: AlertMedia;
   hasError: boolean;
@@ -125,7 +130,7 @@ function MediaThumbnail({ media, hasError, onError, onClick }: MediaThumbnailPro
         </div>
       ) : (
         <img
-          src={`https://rjnshudkyinfhwyrxbmh.supabase.co/storage/v1/object/public/alerts/${media.storageKey}`}
+          src={getMediaUrl(media.id)}
           alt={media.originalFilename}
           className="w-full h-full object-cover"
           onError={onError}
@@ -484,7 +489,7 @@ export function AlertDetailPage() {
               <X className="w-6 h-6 text-gray-700" />
             </button>
             <img
-              src={`https://rjnshudkyinfhwyrxbmh.supabase.co/storage/v1/object/public/alerts/${selectedMedia.storageKey}`}
+              src={getMediaUrl(selectedMedia.id)}
               alt={selectedMedia.originalFilename}
               className="w-full h-full object-contain"
             />
