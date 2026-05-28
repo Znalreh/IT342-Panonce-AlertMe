@@ -158,17 +158,19 @@ export function AlertDetailPage() {
   const [isPostingComment, setIsPostingComment] = useState(false);
   const [mediaLoadErrors, setMediaLoadErrors] = useState<Set<string>>(new Set());
   const [selectedMedia, setSelectedMedia] = useState<AlertMedia | null>(null);
-  const loadAlertRef = useRef<() => Promise<void>>(async () => {});
+  const loadAlertRef = useRef<(showLoading?: boolean) => Promise<void>>(async () => {});
 
   useEffect(() => {
-    loadAlertRef.current = async () => {
+    loadAlertRef.current = async (showLoading = false) => {
       if (!id) {
         setErrorMessage("Alert ID is missing from the URL.");
         return;
       }
 
-      setIsLoading(true);
-      setErrorMessage(null);
+      if (showLoading) {
+        setIsLoading(true);
+        setErrorMessage(null);
+      }
 
       try {
         const alerts = await fetchAlerts();
@@ -180,15 +182,19 @@ export function AlertDetailPage() {
           setAlert(found);
         }
       } catch (error) {
-        setErrorMessage(error instanceof Error ? error.message : "Unable to load alert details.");
+        if (showLoading) {
+          setErrorMessage(error instanceof Error ? error.message : "Unable to load alert details.");
+        }
       } finally {
-        setIsLoading(false);
+        if (showLoading) {
+          setIsLoading(false);
+        }
       }
     };
   }, [id]);
 
   useEffect(() => {
-    loadAlertRef.current();
+    loadAlertRef.current(true);
   }, [id]);
 
   useEffect(() => {
@@ -197,7 +203,7 @@ export function AlertDetailPage() {
         return;
       }
 
-      await loadAlertRef.current();
+      await loadAlertRef.current(false);
     });
 
     return () => connection.close();
@@ -210,7 +216,7 @@ export function AlertDetailPage() {
     try {
       await postAlertComment(id, newComment.trim());
       setNewComment("");
-      await loadAlertRef.current();
+      await loadAlertRef.current(false);
     } catch (error) {
       console.error("Failed to post comment:", error);
     } finally {
