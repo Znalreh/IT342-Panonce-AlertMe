@@ -14,6 +14,7 @@ import com.example.alertme.data.dto.ChangePasswordRequest
 import com.example.alertme.data.dto.UpdateProfileRequest
 import com.example.alertme.data.models.Alert
 import com.example.alertme.data.preferences.TokenManager
+import com.example.alertme.util.AlertNotifier
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
@@ -43,7 +44,10 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     private val alertWsClient = AlertWebSocketClient()
-    private val wsListener: (AlertWebSocketClient.AlertStatusUpdate) -> Unit = { _ ->
+    private val wsListener: (AlertWebSocketClient.AlertStatusUpdate) -> Unit = { update ->
+        if (update.eventType.equals("ALERT_CREATED", ignoreCase = true)) {
+            AlertNotifier.notifyNewAlert(this, update.alertId, update.alertTitle)
+        }
         runOnUiThread { loadProfile() }
     }
 

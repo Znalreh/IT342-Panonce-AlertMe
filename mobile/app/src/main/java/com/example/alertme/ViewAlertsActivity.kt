@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.alertme.data.api.RetrofitClient
 import com.example.alertme.data.api.AlertWebSocketClient
 import com.example.alertme.data.models.Alert
+import com.example.alertme.util.AlertNotifier
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -19,7 +20,10 @@ import java.util.Locale
 class ViewAlertsActivity : AppCompatActivity() {
 
     private val alertWsClient = AlertWebSocketClient()
-    private val wsListener: (AlertWebSocketClient.AlertStatusUpdate) -> Unit = { _ ->
+    private val wsListener: (AlertWebSocketClient.AlertStatusUpdate) -> Unit = { update ->
+        if (update.eventType.equals("ALERT_CREATED", ignoreCase = true)) {
+            AlertNotifier.notifyNewAlert(this, update.alertId, update.alertTitle)
+        }
         runOnUiThread {
             // rebuild the dynamic view by reloading alerts
             val root = findViewById<ScrollView>(android.R.id.content).getChildAt(0) as? LinearLayout
