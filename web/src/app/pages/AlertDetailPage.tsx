@@ -97,9 +97,16 @@ function formatCommentTime(timestamp: string) {
   });
 }
 
-function getMediaUrl(mediaId: string) {
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim() ?? "";
-  return `${apiBaseUrl}/api/v1/media/${mediaId}`;
+const SUPABASE_PUBLIC_ALERTS_URL =
+  "https://rjnshudkyinfhwyrxbmh.supabase.co/storage/v1/object/public/alerts";
+
+function getMediaUrl(media: AlertMedia) {
+  if (media.storageKey.startsWith("local/")) {
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim() ?? "";
+    return `${apiBaseUrl}/api/v1/media/${media.id}`;
+  }
+
+  return `${SUPABASE_PUBLIC_ALERTS_URL}/${media.storageKey}`;
 }
 
 interface MediaThumbnailProps {
@@ -130,7 +137,7 @@ function MediaThumbnail({ media, hasError, onError, onClick }: MediaThumbnailPro
         </div>
       ) : (
         <img
-          src={getMediaUrl(media.id)}
+          src={getMediaUrl(media)}
           alt={media.originalFilename}
           className="w-full h-full object-cover"
           onError={onError}
@@ -489,7 +496,7 @@ export function AlertDetailPage() {
               <X className="w-6 h-6 text-gray-700" />
             </button>
             <img
-              src={getMediaUrl(selectedMedia.id)}
+              src={getMediaUrl(selectedMedia)}
               alt={selectedMedia.originalFilename}
               className="w-full h-full object-contain"
             />
