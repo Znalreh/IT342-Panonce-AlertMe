@@ -33,7 +33,8 @@ public class SupabaseStorageService {
             @Value("${supabase.url:}") String supabaseUrl,
             @Value("${supabase.api-key:}") String supabaseApiKey,
             @Value("${supabase.service-role-key:}") String supabaseServiceRoleKey,
-            @Value("${app.storage.local-fallback:false}") boolean localUploadFallbackEnabled) {
+            @Value("${app.storage.local-fallback:false}") boolean localUploadFallbackEnabled,
+            @Value("${app.allow-localhost:false}") boolean allowLocalhost) {
         this.restTemplate = restTemplate;
         String normalizedUrl = normalizeString(supabaseUrl);
         if (normalizedUrl.endsWith("/")) {
@@ -42,7 +43,7 @@ public class SupabaseStorageService {
         this.supabaseUrl = normalizedUrl;
         this.supabaseApiKey = normalizeString(supabaseApiKey);
         this.supabaseServiceRoleKey = normalizeString(supabaseServiceRoleKey);
-        this.localUploadFallbackEnabled = localUploadFallbackEnabled;
+        this.localUploadFallbackEnabled = localUploadFallbackEnabled && allowLocalhost;
     }
 
     private String normalizeString(String value) {
