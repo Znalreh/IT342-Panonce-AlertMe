@@ -11,6 +11,7 @@ import okhttp3.Request
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
+import android.util.Log
 
 /**
  * Simple WebSocket client to receive alert status updates from the server.
@@ -71,11 +72,12 @@ class AlertWebSocketClient {
 
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: okhttp3.Response) {
-                // no-op
+                Log.d("AlertWebSocketClient", "WebSocket opened to $wsUrl")
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
                 try {
+                    Log.d("AlertWebSocketClient", "Received WS message: $text")
                     val update = gson.fromJson(text, AlertStatusUpdate::class.java)
                     if (update?.alertId != null && (update.status != null || update.eventType != null)) {
                         listeners.forEach { it.invoke(update) }

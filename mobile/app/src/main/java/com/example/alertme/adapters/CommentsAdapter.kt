@@ -33,4 +33,17 @@ class CommentsAdapter(private val items: MutableList<AlertCommentResponse>) : Re
         items.add(0, comment)
         notifyItemInserted(0)
     }
+
+    fun addAll(comments: List<AlertCommentResponse>) {
+        // insert new comments at the front preserving order of the provided list
+        android.util.Log.d("CommentsAdapter", "addAll called with ${comments.size} items: ${comments.map { it.id }}")
+        for (c in comments.asReversed()) {
+            items.add(0, c)
+        }
+        notifyItemRangeInserted(0, comments.size)
+    }
+
+    fun getItemIdAt(index: Int): String {
+        return items.getOrNull(index)?.id ?: ""
+    }
 }

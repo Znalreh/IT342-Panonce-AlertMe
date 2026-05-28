@@ -41,8 +41,14 @@ class AlertDetailActivity : AppCompatActivity() {
     private lateinit var descriptionView: TextView
     private var currentAlertId: String? = null
     private val alertWsClient = AlertWebSocketClient()
+    // adapter and comments title are kept on the activity so websocket updates can update them
+    private var commentsAdapter: CommentsAdapter? = null
+    private var tvCommentsTitle: TextView? = null
+
     private val wsListener: (AlertWebSocketClient.AlertStatusUpdate) -> Unit = { update ->
-        // If update is for current alert, reload details
+        // For updates on the currently viewed alert, reload details silently.
+        // This keeps status timeline and comments in sync without manual refresh.
+        Log.d("AlertDetailActivity", "WS update received: alertId=${update.alertId}, eventType=${update.eventType}, status=${update.status}")
         if (update.alertId == currentAlertId) {
             runOnUiThread { loadAlertDetails(update.alertId) }
         }
@@ -212,11 +218,11 @@ class AlertDetailActivity : AppCompatActivity() {
                         formatRelativeTime(it.createdAt)
                     )
                 }.toMutableList()
-                val commentsAdapter = CommentsAdapter(commentsList)
+                commentsAdapter = CommentsAdapter(commentsList)
                 rvComments.adapter = commentsAdapter
 
-                val tvCommentsTitle = findViewById<TextView>(R.id.tvCommentsTitle)
-                tvCommentsTitle.text = getString(R.string.comments_count, commentsList.size)
+                tvCommentsTitle = findViewById<TextView>(R.id.tvCommentsTitle)
+                tvCommentsTitle?.text = getString(R.string.comments_count, commentsList.size)
 
                 // Post comment
                 val etComment = findViewById<TextInputEditText>(R.id.etComment)
@@ -231,8 +237,8 @@ class AlertDetailActivity : AppCompatActivity() {
                         try {
                             val added = apiService.addComment(alert.id, AddCommentRequest(text))
                             val formatted = added.copy(createdAt = formatRelativeTime(added.createdAt))
-                            commentsAdapter.add(formatted)
-                            tvCommentsTitle.text = getString(R.string.comments_count, commentsAdapter.itemCount)
+                            commentsAdapter?.add(formatted)
+                            tvCommentsTitle?.text = getString(R.string.comments_count, commentsAdapter?.itemCount ?: 0)
                             etComment.setText("")
                         } catch (e: Exception) {
                             Toast.makeText(this@AlertDetailActivity, "Failed to post comment: ${e.message}", Toast.LENGTH_SHORT).show()
