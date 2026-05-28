@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams } from "react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Card } from "../components/ui/card";
@@ -8,6 +8,7 @@ import { Textarea } from "../components/ui/textarea";
 import { Label } from "../components/ui/label";
 import { fetchAlerts, postAlertComment } from "../api/alerts";
 import type { AlertData, AlertStatus, AlertMedia } from "../api/alerts";
+import { connectToAlertStatusUpdates } from "../api/websocket";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -157,9 +158,10 @@ export function AlertDetailPage() {
   const [isPostingComment, setIsPostingComment] = useState(false);
   const [mediaLoadErrors, setMediaLoadErrors] = useState<Set<string>>(new Set());
   const [selectedMedia, setSelectedMedia] = useState<AlertMedia | null>(null);
+  const loadAlertRef = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
-    async function loadAlert() {
+    loadAlertRef.current = async () => {
       if (!id) {
         setErrorMessage("Alert ID is missing from the URL.");
         return;
@@ -182,9 +184,23 @@ export function AlertDetailPage() {
       } finally {
         setIsLoading(false);
       }
-    }
+    };
+  }, [id]);
 
-    loadAlert();
+  useEffect(() => {
+    loadAlertRef.current();
+  }, [id]);
+
+  useEffect(() => {
+    const connection = connectToAlertStatusUpdates(async (update) => {
+      if (!id || update.alertId !== id) {
+        return;
+      }
+
+      await loadAlertRef.current();
+    });
+
+    return () => connection.close();
   }, [id]);
 
   const handlePostComment = async () => {
@@ -194,11 +210,7 @@ export function AlertDetailPage() {
     try {
       await postAlertComment(id, newComment.trim());
       setNewComment("");
-      const alerts = await fetchAlerts();
-      const updated = alerts.find((item) => item.id === id);
-      if (updated) {
-        setAlert(updated);
-      }
+      await loadAlertRef.current();
     } catch (error) {
       console.error("Failed to post comment:", error);
     } finally {

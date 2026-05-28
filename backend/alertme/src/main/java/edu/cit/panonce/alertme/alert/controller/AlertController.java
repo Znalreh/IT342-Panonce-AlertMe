@@ -282,6 +282,13 @@ public class AlertController {
 
         AlertStatusHistory saved = alertStatusHistoryRepository.save(history);
 
+        alertStatusWebSocketHandler.broadcastStatusUpdate(new AlertStatusUpdateMessage(
+            alertId,
+            alert.getStatus().name(),
+            alert.getTitle(),
+            saved.getCreatedAt() != null ? saved.getCreatedAt().toString() : java.time.Instant.now().toString(),
+            "COMMENT_ADDED"));
+
         AlertStatusHistoryEntryResponse response = new AlertStatusHistoryEntryResponse();
         response.setId(saved.getId());
         response.setFromStatus(null);
